@@ -16,7 +16,7 @@ pom.xml.versionsBackup
 pom.xml.next
 
 # Gradle
-.gradle/
+rhythmiqcontrolplaneservice/.gradle/
 build/
 out/
 !gradle/wrapper/gradle-wrapper.jar
