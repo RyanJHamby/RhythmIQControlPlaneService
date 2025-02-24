@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("software.amazon.smithy.gradle.smithy-jar").version("1.2.0")
 }
 
 group = "com.rhthymiq"
@@ -27,8 +28,23 @@ dependencies {
     // Unit Testing
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
     testImplementation("org.mockito:mockito-core:5.5.0")
+
+    implementation("software.amazon.smithy:smithy-model:1.54.0")
+    implementation("software.amazon.smithy:smithy-build:1.54.0")
+    implementation("software.amazon.smithy:smithy-aws-traits:1.54.0")
+    implementation("software.amazon.smithy:smithy-linters:1.54.0")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+//smithy {
+//    smithyBuildConfigs = listOf(
+//        smithyBuild {
+//            namespace("com.rhthymiq")
+//            version("1.0")
+//            // Add other configurations if needed
+//        }
+//    )
+//}

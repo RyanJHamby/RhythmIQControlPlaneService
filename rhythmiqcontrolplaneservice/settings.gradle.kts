@@ -3,6 +3,10 @@ rootProject.name = "src.main.java.com.rhthymiq"
 pluginManagement {
     repositories {
         gradlePluginPortal()
+        mavenLocal()
         mavenCentral()
     }
 }
+
+include(":service")
+include(":internal-model")
