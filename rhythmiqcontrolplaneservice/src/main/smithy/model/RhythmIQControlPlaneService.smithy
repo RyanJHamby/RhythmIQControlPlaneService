@@ -1,7 +1,8 @@
 $version: "2"
 
-namespace com.example.profiles
+namespace com.rhythmiq.controlplaneservice
 
+use smithy.api#String
 use smithy.api#http
 use smithy.api#required
 
@@ -17,35 +18,43 @@ operation CreateProfile {
 
 structure CreateProfileRequest {
     @required
-    @http(label: "username")
-    username: string
+    username: String
 
     @required
-    firstName: string
+    firstName: String
 
     @required
-    lastName: string
+    lastName: String
 
     @required
-    email: string
+    email: String
 
     @required
-    phoneNumber: string
+    phoneNumber: String
 
     @required
-    password: string
+    password: String
 }
 
 structure CreateProfileResponse {
-    message: string
-    profileId: string
+    message: String
+    profileId: String
 }
-// @httpError(code: 400)
-// structure ValidationError {
-//    message: string
-//    // errors: map<string, string>
-// }
-// @httpError(code: 409)
-// structure ConflictError {
-//    message: string
-// }
+
+@error("client")
+@httpError(400)
+structure ValidationError {
+    message: String
+    errors: ValidationErrorMap
+}
+
+@error("client")
+@httpError(409)
+structure ConflictError {
+    message: String
+}
+
+map ValidationErrorMap {
+    key: String
+    value: Integer
+}
