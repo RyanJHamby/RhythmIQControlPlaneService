@@ -29,6 +29,8 @@ out/
 out/
 *.class
 
+.github/
+
 # Eclipse
 .classpath
 .project
