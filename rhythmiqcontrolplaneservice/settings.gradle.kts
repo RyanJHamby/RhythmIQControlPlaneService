@@ -1,4 +1,4 @@
-rootProject.name = "src.main.java.com.rhthymiq"
+rootProject.name = "src.main.java.com.rhthymiq.controlplaneservice"
 
 pluginManagement {
     repositories {

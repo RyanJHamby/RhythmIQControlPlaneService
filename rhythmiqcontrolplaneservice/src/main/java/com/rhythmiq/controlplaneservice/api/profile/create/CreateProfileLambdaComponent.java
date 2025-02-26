@@ -1,6 +1,6 @@
-package com.rythymiq.api.profile.create;
+package com.rhythmiq.controlplaneservice.api.profile.create;
 
-import com.rythymiq.dagger.module.LambdaEnvironmentModule;
+import com.rhythmiq.controlplaneservice.module.LambdaEnvironmentModule;
 import dagger.Component;
 
 @Component(modules = {LambdaEnvironmentModule.class})

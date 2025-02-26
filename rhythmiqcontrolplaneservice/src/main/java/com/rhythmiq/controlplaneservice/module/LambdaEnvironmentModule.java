@@ -1,4 +1,4 @@
-package com.rythymiq.dagger.module;
+package com.rhythmiq.controlplaneservice.module;
 
 import dagger.Module;
 

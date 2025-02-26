@@ -1,3 +1,13 @@
 {
-  "version": "1.0"
+  "version": "1.0",
+  "sources": ["src/main/smithy/model"],
+  "outputDirectory": "build/smithy",
+  "plugins": {
+    "openapi": {
+      "service": "com.rhythmiq.controlplaneservice#RhythmIqControlPlaneService",
+      "package": "com.rhythmiq.controlplaneservice.model",
+      "protocol": "aws.protocols#restJson1",
+      "version": "3.1.0"
+    }
+  }
 }

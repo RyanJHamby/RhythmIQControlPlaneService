@@ -1,16 +1,21 @@
 plugins {
     id("java")
-    id("software.amazon.smithy.gradle.smithy-jar").version("1.2.0")
+    id("idea")
+    id("software.amazon.smithy.gradle.smithy-jar").version("1.2.0") // Package smithy models into JAR
+    id("software.amazon.smithy.gradle.smithy-base").version("1.2.0")
 }
 
-group = "com.rhthymiq"
+group = "com.rhthymiq.controlplaneservice"
 version = "1.0-SNAPSHOT"
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
 dependencies {
+    smithyBuild("software.amazon.smithy:smithy-aws-traits:1.54.0")
+
     // Dagger 2 Dependencies
     implementation("com.google.dagger:dagger:2.50")
     annotationProcessor("com.google.dagger:dagger-compiler:2.50") // Use annotationProcessor for Dagger
@@ -31,20 +36,14 @@ dependencies {
 
     implementation("software.amazon.smithy:smithy-model:1.54.0")
     implementation("software.amazon.smithy:smithy-build:1.54.0")
-    implementation("software.amazon.smithy:smithy-aws-traits:1.54.0")
+    implementation("software.amazon.smithy:smithy-aws-traits:1.54.0") // Required for restJson1 trait
     implementation("software.amazon.smithy:smithy-linters:1.54.0")
+    implementation("software.amazon.smithy:smithy-openapi:1.54.0") // https://smithy.io/2.0/guides/model-translations/converting-to-openapi.html
+//    implementation("software.amazon.smithy:smithy-java-codegen:1.54.0")
+
+//    smithyBuild("software.amazon.smithy.codegen:plugins:0.26.0")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
 }
-
-//smithy {
-//    smithyBuildConfigs = listOf(
-//        smithyBuild {
-//            namespace("com.rhthymiq")
-//            version("1.0")
-//            // Add other configurations if needed
-//        }
-//    )
-//}
