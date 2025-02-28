@@ -5,7 +5,7 @@
   "plugins": {
     "openapi": {
       "service": "com.rhythmiq.controlplaneservice#RhythmIqControlPlaneService",
-      "package": "com.rhythmiq.controlplaneservice.model",
+      "package": "com.rhythmiq.controlplaneservice",
       "protocol": "aws.protocols#restJson1",
       "version": "3.1.0"
     }
