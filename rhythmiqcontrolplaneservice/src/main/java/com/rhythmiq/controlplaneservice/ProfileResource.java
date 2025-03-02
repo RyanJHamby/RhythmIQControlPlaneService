@@ -1,12 +1,20 @@
 package com.rhythmiq.controlplaneservice;
 
 import com.rhthymiq.controlplaneservice.model.*;
-import jakarta.ws.rs.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import io.swagger.v3.oas.annotations.*;
-import io.swagger.v3.oas.annotations.media.*;
 import io.swagger.v3.oas.annotations.responses.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 

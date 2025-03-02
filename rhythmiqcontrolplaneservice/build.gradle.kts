@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("idea")
-    id("org.openapi.generator") version "6.0.1"
+    id("org.openapi.generator") version "7.12.0"
 }
 
 group = "com.rhthymiq.controlplaneservice"
@@ -10,35 +10,28 @@ version = "1.0-SNAPSHOT"
 repositories {
     mavenLocal()
     mavenCentral()
-    maven { url = uri("https://jitpack.io") }
+    maven { url = uri("https://jitpack.io") } // Jitpack for gson-fire
 }
 
 dependencies {
+    implementation("javax.annotation:javax.annotation-api:1.3.2")
+    implementation("com.google.code.findbugs:jsr305:3.0.2") // Dependency for Nullable annotation
+
     // JAX-RS API for RESTful services
     implementation("jakarta.ws.rs:jakarta.ws.rs-api:3.0.0")
 
-    implementation("javax.annotation:javax.annotation-api:1.3.2")
-
-    // Dagger 2 Dependencies
     implementation("com.google.dagger:dagger:2.50")
-    annotationProcessor("com.google.dagger:dagger-compiler:2.50") // Use annotationProcessor for Dagger
 
-//    implementation("com.github.julman99:gson-fire:1.8.4")
-    implementation("com.google.code.gson:gson:2.8.8")
+    // Allows parsing of JSON for invoker client
+    implementation("com.github.julman99:gson-fire:1.9.0")
 
-    implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
 
-    // Swagger (OpenAPI) annotations
     implementation("io.swagger.core.v3:swagger-jaxrs2:2.2.15")
-    implementation("io.swagger:swagger-annotations:1.6.3")
 
     // AWS Lambda Dependencies
     implementation("com.amazonaws:aws-lambda-java-core:1.2.3")
     implementation("com.amazonaws:aws-lambda-java-events:3.11.0")
-
-    // Jackson for JSON (AWS Lambda uses Jackson)
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.15.0")
 
     // Logging
     implementation("org.slf4j:slf4j-simple:2.0.9")
@@ -52,6 +45,11 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
 openApiGenerate {
     generatorName.set("java")
     inputSpec.set("$rootDir/src/main/resources/openapi.yaml")
@@ -60,8 +58,7 @@ openApiGenerate {
     modelPackage.set("com.rhthymiq.controlplaneservice.model")
     invokerPackage.set("com.rhthymiq.controlplaneservice.invoker")
     configOptions.set(mapOf(
-        "dateLibrary" to "java8",
-        "java8" to "true"
+        "dateLibrary" to "java8"
     ))
 }
 
