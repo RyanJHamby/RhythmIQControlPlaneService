@@ -1,13 +1,16 @@
 {
   "version": "1.0",
-  "sources": ["src/main/smithy/model"],
-  "outputDirectory": "build/smithy",
-  "plugins": {
-    "openapi": {
-      "service": "com.rhythmiq.controlplaneservice#RhythmIqControlPlaneService",
-      "package": "com.rhythmiq.controlplaneservice",
-      "protocol": "aws.protocols#restJson1",
-      "version": "3.1.0"
+  "outputDirectory": "build/smithy-generated",
+  "projections": {
+    "java": {
+      "transforms": [],
+      "plugins": {
+        "java-codegen": {
+          "package": "com.rhythmiq.controlplaneservice",
+          "generateServices": true,
+          "generateModels": true
+        }
+      }
     }
   }
 }

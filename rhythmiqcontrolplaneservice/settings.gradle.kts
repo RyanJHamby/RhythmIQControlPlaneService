@@ -7,6 +7,3 @@ pluginManagement {
         mavenCentral()
     }
 }
-
-include(":service")
-include(":internal-model")
