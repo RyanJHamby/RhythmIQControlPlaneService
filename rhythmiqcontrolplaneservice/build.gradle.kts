@@ -25,7 +25,7 @@ dependencies {
     // Allows parsing of JSON for invoker client
     implementation("com.github.julman99:gson-fire:1.9.0")
 
-    implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
+    implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.14")
 
     implementation("io.swagger.core.v3:swagger-jaxrs2:2.2.15")
 

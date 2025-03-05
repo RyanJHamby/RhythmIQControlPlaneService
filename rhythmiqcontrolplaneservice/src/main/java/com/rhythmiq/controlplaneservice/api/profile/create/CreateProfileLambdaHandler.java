@@ -2,7 +2,11 @@ package com.rhythmiq.controlplaneservice.api.profile.create;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rhthymiq.controlplaneservice.model.CreateProfileRequest;
+import com.rhthymiq.controlplaneservice.model.CreateProfileResponse;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
@@ -12,10 +16,11 @@ import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CreateProfileLambdaHandler implements RequestHandler<CreateProfileRequest, String> {
+public class CreateProfileLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     private final DynamoDbClient dynamoDbClient;
     private static final String TABLE_NAME = "Profiles";
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Inject
     public CreateProfileLambdaHandler(DynamoDbClient dynamoDbClient) {
@@ -23,14 +28,15 @@ public class CreateProfileLambdaHandler implements RequestHandler<CreateProfileR
     }
 
     @Override
-    public String handleRequest(CreateProfileRequest request, Context context) {
-        context.getLogger().log("Received request for user: " + request.getName());
+    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
+        context.getLogger().log("Received request: " + request.getBody());
+
 
         if (StringUtils.isBlank(request.getName())) {
-            return "Error: Name is required.";
+            return createErrorResponse(400, "Request must include a name.");
         }
         if (StringUtils.isBlank(request.getEmail())) {
-            return "Error: Email is required.";
+            return createErrorResponse(400, "Request must include an email.");
         }
 
         // Store in DynamoDB
@@ -45,10 +51,44 @@ public class CreateProfileLambdaHandler implements RequestHandler<CreateProfileR
                     .build();
 
             dynamoDbClient.putItem(putItemRequest);
-            return "Profile successfully created for user: " + request.getName();
+
+            // Create success response
+            CreateProfileResponse response = new CreateProfileResponse("Profile successfully created for user: " + profileRequest.getUsername());
+            return createSuccessResponse(200, response);
+
         } catch (Exception e) {
             context.getLogger().log("Error processing request: " + e.getMessage());
-            return "Error: Failed to create profile.";
+            return createErrorResponse(500, "Failed to create profile.");
         }
+    }
+
+    private APIGatewayProxyResponseEvent createSuccessResponse(int statusCode, Object responseBody) throws Exception {
+        return new APIGatewayProxyResponseEvent()
+                .withStatusCode(statusCode)
+                .withHeaders(getHeaders())
+                .withBody(objectMapper.writeValueAsString(responseBody));
+    }
+
+    private APIGatewayProxyResponseEvent createErrorResponse(int statusCode, String errorMessage) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("error", errorMessage);
+
+        try {
+            return new APIGatewayProxyResponseEvent()
+                    .withStatusCode(statusCode)
+                    .withHeaders(getHeaders())
+                    .withBody(objectMapper.writeValueAsString(errorResponse));
+        } catch (Exception e) {
+            return new APIGatewayProxyResponseEvent()
+                    .withStatusCode(500)
+                    .withHeaders(getHeaders())
+                    .withBody("{\"error\": \"Internal Server Error\"}");
+        }
+    }
+
+    private Map<String, String> getHeaders() {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json");
+        return headers;
     }
 }
