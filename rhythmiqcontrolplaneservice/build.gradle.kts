@@ -36,7 +36,6 @@ dependencies {
     implementation("software.amazon.awssdk:core:2.20.123") // AWS core utilities
     implementation("software.amazon.awssdk:auth:2.20.123") // AWS authentication
     implementation("software.amazon.awssdk:regions:2.20.123") // AWS region utilities
-    implementation("software.amazon.awssdk:retry:2.20.123") // AWS retry policies
 
     // Logging
     implementation("org.slf4j:slf4j-simple:2.0.9")
@@ -58,7 +57,7 @@ java {
 openApiGenerate {
     generatorName.set("java")
     inputSpec.set("$rootDir/src/main/resources/openapi.yaml")
-    outputDir.set("$buildDir/generated")
+    outputDir.set(layout.buildDirectory.dir("generated").get().asFile.absolutePath)
     apiPackage.set("com.rhthymiq.controlplaneservice.api")
     modelPackage.set("com.rhthymiq.controlplaneservice.model")
     invokerPackage.set("com.rhthymiq.controlplaneservice.invoker")
@@ -70,7 +69,7 @@ openApiGenerate {
 sourceSets {
     main {
         java {
-            srcDir("$buildDir/generated/src/main/java")
+            srcDir(layout.buildDirectory.dir("generated/src/main/java"))
         }
     }
 }
