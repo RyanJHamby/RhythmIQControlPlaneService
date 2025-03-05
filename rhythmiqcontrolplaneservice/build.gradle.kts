@@ -32,6 +32,11 @@ dependencies {
     // AWS Lambda Dependencies
     implementation("com.amazonaws:aws-lambda-java-core:1.2.3")
     implementation("com.amazonaws:aws-lambda-java-events:3.11.0")
+    implementation("software.amazon.awssdk:dynamodb:2.20.123") // Use latest AWS SDK version
+    implementation("software.amazon.awssdk:core:2.20.123") // AWS core utilities
+    implementation("software.amazon.awssdk:auth:2.20.123") // AWS authentication
+    implementation("software.amazon.awssdk:regions:2.20.123") // AWS region utilities
+    implementation("software.amazon.awssdk:retry:2.20.123") // AWS retry policies
 
     // Logging
     implementation("org.slf4j:slf4j-simple:2.0.9")
