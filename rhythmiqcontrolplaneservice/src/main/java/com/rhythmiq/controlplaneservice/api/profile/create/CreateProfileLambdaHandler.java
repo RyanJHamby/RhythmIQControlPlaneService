@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rhthymiq.controlplaneservice.model.CreateProfileRequest;
 import com.rhthymiq.controlplaneservice.model.CreateProfileResponse;
@@ -31,18 +32,24 @@ public class CreateProfileLambdaHandler implements RequestHandler<APIGatewayProx
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
         context.getLogger().log("Received request: " + request.getBody());
 
+        CreateProfileRequest profileRequest = null;
+        try {
+            profileRequest = objectMapper.readValue(request.getBody(), CreateProfileRequest.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
-        if (StringUtils.isBlank(request.getName())) {
+        if (StringUtils.isBlank(profileRequest.getName())) {
             return createErrorResponse(400, "Request must include a name.");
         }
-        if (StringUtils.isBlank(request.getEmail())) {
+        if (StringUtils.isBlank(profileRequest.getEmail())) {
             return createErrorResponse(400, "Request must include an email.");
         }
 
         // Store in DynamoDB
         Map<String, AttributeValue> item = new HashMap<>();
-        item.put("name", AttributeValue.builder().s(request.getName()).build());
-        item.put("email", AttributeValue.builder().s(request.getEmail()).build());
+        item.put("name", AttributeValue.builder().s(profileRequest.getName()).build());
+        item.put("email", AttributeValue.builder().s(profileRequest.getEmail()).build());
 
         try {
             PutItemRequest putItemRequest = PutItemRequest.builder()
@@ -53,7 +60,8 @@ public class CreateProfileLambdaHandler implements RequestHandler<APIGatewayProx
             dynamoDbClient.putItem(putItemRequest);
 
             // Create success response
-            CreateProfileResponse response = new CreateProfileResponse("Profile successfully created for user: " + profileRequest.getUsername());
+            CreateProfileResponse response = new CreateProfileResponse()
+                    .name(profileRequest.getName());
             return createSuccessResponse(200, response);
 
         } catch (Exception e) {
