@@ -49,9 +49,9 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-tasks.register("deployInfra") {
+tasks.register("buildInfra") {
     group = "infrastructure"
-    description = "Build and deploy Terraform CDK infrastructure"
+    description = "Install dependencies and build Terraform CDK project"
 
     doLast {
         exec {
@@ -59,15 +59,10 @@ tasks.register("deployInfra") {
             workingDir = file("$rootDir/infra")
         }
         exec {
-            commandLine("npx", "cdktf", "deploy", "--auto-approve")
+            commandLine("npx", "cdktf", "synth")
             workingDir = file("$rootDir/infra")
         }
     }
-}
-
-tasks.register("buildAndDeploy") {
-    group = "infrastructure"
-    dependsOn("build", "deployInfra")
 }
 
 java {
@@ -97,4 +92,9 @@ sourceSets {
 
 tasks.named("compileJava") {
     dependsOn("openApiGenerate")
+}
+
+tasks.clean {
+    // Delete the cdktf.out directory in the infra folder
+    delete(file("$rootDir/infra/cdktf.out"))
 }
