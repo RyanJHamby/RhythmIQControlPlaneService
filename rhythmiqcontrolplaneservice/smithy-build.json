@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "outputDirectory": "build/smithy-generated",
+  "projections": {
+    "java": {
+      "transforms": [],
+      "plugins": {
+        "java-codegen": {
+          "package": "com.rhythmiq.controlplaneservice",
+          "generateServices": true,
+          "generateModels": true
+        }
+      }
+    }
+  }
+}
