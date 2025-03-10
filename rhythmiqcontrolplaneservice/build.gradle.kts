@@ -51,11 +51,15 @@ tasks.withType<Test> {
 
 tasks.register("buildInfra") {
     group = "infrastructure"
-    description = "Install dependencies and build Terraform CDK project"
+    description = "Install dependencies, compile TypeScript, and build Terraform CDK project"
 
     doLast {
         exec {
             commandLine("npm", "install")
+            workingDir = file("$rootDir/infra")
+        }
+        exec {
+            commandLine("npx", "tsc")
             workingDir = file("$rootDir/infra")
         }
         exec {

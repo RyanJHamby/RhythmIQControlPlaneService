@@ -6,6 +6,7 @@ class MyStack extends TerraformStack {
     super(scope, id);
 
     // define resources here
+    new ProfileStack(this, "profile");
   }
 }
 
