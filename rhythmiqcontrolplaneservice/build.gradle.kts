@@ -51,22 +51,29 @@ tasks.withType<Test> {
 
 tasks.register("buildInfra") {
     group = "infrastructure"
-    description = "Install dependencies, compile TypeScript, and build Terraform CDK project"
+    description = "Install dependencies, compile TypeScript, and synthesize Terraform CDK"
 
     doLast {
         exec {
             commandLine("npm", "install")
             workingDir = file("$rootDir/infra")
+            isIgnoreExitValue = false  // Fail if npm install fails
         }
         exec {
             commandLine("npx", "tsc")
             workingDir = file("$rootDir/infra")
+            isIgnoreExitValue = false
         }
         exec {
             commandLine("npx", "cdktf", "synth")
             workingDir = file("$rootDir/infra")
+            isIgnoreExitValue = false
         }
     }
+}
+
+tasks.named("build") {
+    dependsOn("buildInfra")
 }
 
 java {
