@@ -1,11 +1,19 @@
 import { App, TerraformStack } from "cdktf";
-import { AwsProvider } from "@cdktf/provider-aws";
-import { LambdaFunction, LambdaPermission } from "@cdktf/provider-aws/lib/lambda-function";
-import { ApiGatewayRestApi, ApiGatewayResource, ApiGatewayMethod, ApiGatewayIntegration, ApiGatewayDeployment, ApiGatewayStage } from "@cdktf/provider-aws/lib/apigateway";
-import { IamRole, IamPolicy } from "@cdktf/provider-aws/lib/iam";
-import { DynamodbTable } from "@cdktf/provider-aws/lib/dynamodb";
+import { AwsProvider } from "@cdktf/provider-aws/lib/provider";
+import { LambdaFunction } from "@cdktf/provider-aws/lib/lambda-function";
+import { LambdaPermission } from "@cdktf/provider-aws/lib/lambda-permission";
+import { ApiGatewayRestApi } from "@cdktf/provider-aws/lib/api-gateway-rest-api";
+import { ApiGatewayResource } from "@cdktf/provider-aws/lib/api-gateway-resource";
+import { ApiGatewayMethod } from "@cdktf/provider-aws/lib/api-gateway-method";
+import { ApiGatewayIntegration } from "@cdktf/provider-aws/lib/api-gateway-integration";
+import { ApiGatewayDeployment } from "@cdktf/provider-aws/lib/api-gateway-deployment";
+import { ApiGatewayStage } from "@cdktf/provider-aws/lib/api-gateway-stage";
+import { IamRole } from "@cdktf/provider-aws/lib/iam-role";
+import { IamPolicy } from "@cdktf/provider-aws/lib/iam-policy";
+import { IamRolePolicyAttachment } from "@cdktf/provider-aws/lib/iam-role-policy-attachment";
+import { DynamodbTable } from "@cdktf/provider-aws/lib/dynamodb-table";
 
-class MyInfraStack extends TerraformStack {
+export class ProfileStack extends TerraformStack {
   constructor(scope: App, id: string) {
     super(scope, id);
 
@@ -49,6 +57,11 @@ class MyInfraStack extends TerraformStack {
           },
         ],
       }),
+    });
+
+    new IamRolePolicyAttachment(this, "LambdaRolePolicyAttachment", {
+      role: lambdaRole.name,
+      policyArn: lambdaPolicy.arn,
     });
 
     const dynamoTable = new DynamodbTable(this, "ProfilesTable", {
@@ -113,7 +126,3 @@ class MyInfraStack extends TerraformStack {
     });
   }
 }
-
-const app = new App();
-new MyInfraStack(app, "MyInfra");
-app.synth();

@@ -1,15 +1,16 @@
 import { Construct } from "constructs";
 import { App, TerraformStack } from "cdktf";
+import { ProfileStack } from "./lib/profileStack";
 
-class MyStack extends TerraformStack {
+class ControlPlaneServiceApplication extends TerraformStack {
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
     // define resources here
-    new ProfileStack(this, "profile");
   }
 }
 
 const app = new App();
-new MyStack(app, "infra");
+new ControlPlaneServiceApplication(app, "infra");
+new ProfileStack(app, "profile");
 app.synth();
