@@ -11,6 +11,9 @@ class ControlPlaneServiceApplication extends TerraformStack {
 }
 
 const app = new App();
-new ControlPlaneServiceApplication(app, "infra");
-new ProfileStack(app, "profile");
+const profileStack = new ProfileStack(app, "profile");
+const controlPlaneServiceStack = new ControlPlaneServiceApplication(app, "infra");
+
+controlPlaneServiceStack.addDependency(profileStack);
+
 app.synth();

@@ -6,8 +6,6 @@ import { ApiGatewayRestApi } from "@cdktf/provider-aws/lib/api-gateway-rest-api"
 import { ApiGatewayResource } from "@cdktf/provider-aws/lib/api-gateway-resource";
 import { ApiGatewayMethod } from "@cdktf/provider-aws/lib/api-gateway-method";
 import { ApiGatewayIntegration } from "@cdktf/provider-aws/lib/api-gateway-integration";
-import { ApiGatewayDeployment } from "@cdktf/provider-aws/lib/api-gateway-deployment";
-import { ApiGatewayStage } from "@cdktf/provider-aws/lib/api-gateway-stage";
 import { IamRole } from "@cdktf/provider-aws/lib/iam-role";
 import { IamPolicy } from "@cdktf/provider-aws/lib/iam-policy";
 import { IamRolePolicyAttachment } from "@cdktf/provider-aws/lib/iam-role-policy-attachment";
@@ -71,12 +69,15 @@ export class ProfileStack extends TerraformStack {
       hashKey: "username",
     });
 
+    const accountId = "122610524235";
+    const region = "us-east-1";
+
     const lambda = new LambdaFunction(this, "CreateProfileLambda", {
       functionName: "CreateProfileLambda",
       runtime: "java17",
       handler: "com.rhythmiq.controlplaneservice.api.profile.create.CreateProfileLambdaHandler",
-      s3Bucket: "my-bucket",
-      s3Key: "my-app.jar",
+      s3Bucket: `gradle-deploy-${accountId}-${region}`,
+      s3Key: "src.main.java.com.rhthymiq.controlplaneservice-1.0-SNAPSHOT.jar", // Ensure this matches the uploaded file
       role: lambdaRole.arn,
       environment: {
         variables: { TABLE_NAME: dynamoTable.name },
@@ -115,14 +116,15 @@ export class ProfileStack extends TerraformStack {
       principal: "apigateway.amazonaws.com",
     });
 
-    const deployment = new ApiGatewayDeployment(this, "Deployment", {
-      restApiId: api.id,
-    });
-
-    new ApiGatewayStage(this, "ProdStage", {
-      deploymentId: deployment.id,
-      restApiId: api.id,
-      stageName: "prod",
-    });
+//     const deployment = new ApiGatewayDeployment(this, "Deployment", {
+//       restApiId: api.id,
+//       dependsOn: [postMethod], // Ensure the method is created before deployment
+//     });
+//
+//     new ApiGatewayStage(this, "ProdStage", {
+//       deploymentId: deployment.id,
+//       restApiId: api.id,
+//       stageName: "prod",
+//     });
   }
 }
