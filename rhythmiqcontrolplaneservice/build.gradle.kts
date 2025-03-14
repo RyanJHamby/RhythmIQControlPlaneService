@@ -4,7 +4,7 @@ plugins {
     id("org.openapi.generator") version "7.12.0"
 }
 
-group = "com.rhthymiq.controlplaneservice"
+group = "com.rhythmiq.controlplaneservice"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -14,6 +14,10 @@ repositories {
 }
 
 dependencies {
+    implementation("com.fasterxml.jackson.core:jackson-core:2.16.1")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.16.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
+
     implementation("javax.annotation:javax.annotation-api:1.3.2")
     implementation("com.google.code.findbugs:jsr305:3.0.2") // Dependency for Nullable annotation
 
@@ -85,9 +89,9 @@ openApiGenerate {
     generatorName.set("java")
     inputSpec.set("$rootDir/src/main/resources/openapi.yaml")
     outputDir.set(layout.buildDirectory.dir("generated").get().asFile.absolutePath)
-    apiPackage.set("com.rhthymiq.controlplaneservice.api")
-    modelPackage.set("com.rhthymiq.controlplaneservice.model")
-    invokerPackage.set("com.rhthymiq.controlplaneservice.invoker")
+    apiPackage.set("com.rhythmiq.controlplaneservice.api")
+    modelPackage.set("com.rhythmiq.controlplaneservice.model")
+    invokerPackage.set("com.rhythmiq.controlplaneservice.invoker")
     configOptions.set(mapOf(
         "dateLibrary" to "java8"
     ))
@@ -103,6 +107,10 @@ sourceSets {
 
 tasks.named("compileJava") {
     dependsOn("openApiGenerate")
+}
+
+tasks.named<Jar>("jar") {
+    from(sourceSets.main.get().output)
 }
 
 tasks.clean {

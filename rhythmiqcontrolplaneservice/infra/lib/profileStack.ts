@@ -74,10 +74,10 @@ export class ProfileStack extends TerraformStack {
 
     const lambda = new LambdaFunction(this, "CreateProfileLambda", {
       functionName: "CreateProfileLambda",
-      runtime: "java17",
+      runtime: "java21",
       handler: "com.rhythmiq.controlplaneservice.api.profile.create.CreateProfileLambdaHandler",
       s3Bucket: `gradle-deploy-${accountId}-${region}`,
-      s3Key: "src.main.java.com.rhthymiq.controlplaneservice-1.0-SNAPSHOT.jar", // Ensure this matches the uploaded file
+      s3Key: "src.main.java.com.rhythmiq.controlplaneservice-1.0-SNAPSHOT.jar", // Ensure this matches the uploaded file
       role: lambdaRole.arn,
       environment: {
         variables: { TABLE_NAME: dynamoTable.name },
