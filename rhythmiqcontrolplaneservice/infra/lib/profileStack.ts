@@ -10,6 +10,9 @@ import { IamRole } from "@cdktf/provider-aws/lib/iam-role";
 import { IamPolicy } from "@cdktf/provider-aws/lib/iam-policy";
 import { IamRolePolicyAttachment } from "@cdktf/provider-aws/lib/iam-role-policy-attachment";
 import { DynamodbTable } from "@cdktf/provider-aws/lib/dynamodb-table";
+import * as fs from "fs";
+import * as path from "path";
+import * as crypto from "crypto";
 
 export class ProfileStack extends TerraformStack {
   constructor(scope: App, id: string) {
@@ -69,15 +72,16 @@ export class ProfileStack extends TerraformStack {
       hashKey: "username",
     });
 
-    const accountId = "122610524235";
-    const region = "us-east-1";
+    const lambdaCodePath = path.join(__dirname, "lambda", "createProfileLambda.zip");
+    const lambdaCode = fs.readFileSync(lambdaCodePath);
+    const lambdaCodeHash = crypto.createHash("sha256").update(lambdaCode).digest("hex");
 
     const lambda = new LambdaFunction(this, "CreateProfileLambda", {
       functionName: "CreateProfileLambda",
-      runtime: "java21",
+      runtime: "java17",
       handler: "com.rhythmiq.controlplaneservice.api.profile.create.CreateProfileLambdaHandler",
-      s3Bucket: `gradle-deploy-${accountId}-${region}`,
-      s3Key: "src.main.java.com.rhythmiq.controlplaneservice-1.0-SNAPSHOT.jar", // Ensure this matches the uploaded file
+      filename: lambdaCodePath,
+      sourceCodeHash: lambdaCodeHash,
       role: lambdaRole.arn,
       environment: {
         variables: { TABLE_NAME: dynamoTable.name },
@@ -116,15 +120,15 @@ export class ProfileStack extends TerraformStack {
       principal: "apigateway.amazonaws.com",
     });
 
-//     const deployment = new ApiGatewayDeployment(this, "Deployment", {
-//       restApiId: api.id,
-//       dependsOn: [postMethod], // Ensure the method is created before deployment
-//     });
-//
-//     new ApiGatewayStage(this, "ProdStage", {
-//       deploymentId: deployment.id,
-//       restApiId: api.id,
-//       stageName: "prod",
-//     });
+    const deployment = new ApiGatewayDeployment(this, "Deployment", {
+      restApiId: api.id,
+      dependsOn: [postMethod], // Ensure the method is created before deployment
+    });
+
+    new ApiGatewayStage(this, "ProdStage", {
+      deploymentId: deployment.id,
+      restApiId: api.id,
+      stageName: "prod",
+    });
   }
 }
