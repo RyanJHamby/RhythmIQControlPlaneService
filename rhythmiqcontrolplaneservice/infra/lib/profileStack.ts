@@ -105,10 +105,26 @@ export class ProfileStack extends TerraformStack {
       authorization: "NONE",
     });
 
+    const getMethod = new ApiGatewayMethod(this, "GetMethod", {
+      restApiId: api.id,
+      resourceId: profilesResource.id,
+      httpMethod: "GET",
+      authorization: "NONE",
+    });
+
     new ApiGatewayIntegration(this, "PostIntegration", {
       restApiId: api.id,
       resourceId: profilesResource.id,
       httpMethod: postMethod.httpMethod,
+      integrationHttpMethod: "POST",
+      type: "AWS_PROXY",
+      uri: lambda.invokeArn,
+    });
+
+    new ApiGatewayIntegration(this, "GetIntegration", {
+      restApiId: api.id,
+      resourceId: profilesResource.id,
+      httpMethod: getMethod.httpMethod,
       integrationHttpMethod: "POST",
       type: "AWS_PROXY",
       uri: lambda.invokeArn,
