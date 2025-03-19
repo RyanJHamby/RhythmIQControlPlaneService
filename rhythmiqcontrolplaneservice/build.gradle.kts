@@ -2,6 +2,7 @@ plugins {
     id("java")
     id("idea")
     id("org.openapi.generator") version "7.12.0"
+    id("io.freefair.lombok") version "8.6"
 }
 
 group = "com.rhythmiq.controlplaneservice"
@@ -14,6 +15,12 @@ repositories {
 }
 
 dependencies {
+    compileOnly("org.projectlombok:lombok:1.18.30")
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
+
+    testCompileOnly("org.projectlombok:lombok:1.18.30")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.30")
+
     implementation("com.fasterxml.jackson.core:jackson-core:2.16.1")
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.16.1")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
@@ -95,6 +102,69 @@ openApiGenerate {
     configOptions.set(mapOf(
         "dateLibrary" to "java8"
     ))
+}
+
+tasks.register<Zip>("packageLambda") {
+    dependsOn("jar")
+
+    val lambdaDir = layout.buildDirectory.dir("lambda")
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from({ zipTree(tasks.getByName<Jar>("jar").archiveFile) }) // Include the JAR
+    from(configurations.runtimeClasspath.get().files.map { if (it.isDirectory) it else zipTree(it) }) // Include dependencies
+
+    destinationDirectory.set(lambdaDir)
+    archiveFileName.set("lambda.zip")
+}
+
+tasks.register("deployInfra") {
+    group = "infrastructure"
+    description = "Automates Terraform synthesis and deployment for all stacks in infra/"
+
+    doLast {
+        val infraDir = file("infra")
+
+        // Step 1: Run synthesis and wait for completion
+        println("🔄 Synthesizing Terraform stacks...")
+        val synthOutput = "npx cdktf synth".runCommand(infraDir)
+        if (!synthOutput.contains("Synthesis complete")) {
+            throw GradleException("❌ CDKTF synthesis failed. Check logs.")
+        }
+
+        // Step 2: Get list of stacks and filter out unwanted lines
+        println("🔍 Retrieving list of stacks...")
+        val stacks = "cdktf list".runCommand(infraDir)
+            .split("\n")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && !it.contains("Starting") } // Remove bad entries
+
+        if (stacks.isEmpty()) {
+            throw GradleException("❌ No valid Terraform stacks found in infra/.")
+        }
+
+        // Step 3: Deploy each stack sequentially
+        stacks.forEach { stack ->
+            println("🚀 Deploying stack: $stack")
+            val deployOutput = "cdktf deploy $stack --auto-approve".runCommand(infraDir)
+
+            if ("Apply complete!" in deployOutput || "No changes. Your infrastructure matches the configuration." in deployOutput) {
+                println("✅ Stack '$stack' deployed successfully!")
+            } else {
+                throw GradleException("❌ Deployment failed for stack '$stack'. Check logs.")
+            }
+        }
+    }
+}
+
+// Helper function to run shell commands and return output
+fun String.runCommand(workingDir: File): String {
+    val process = ProcessBuilder("sh", "-c", this)
+        .directory(workingDir)
+        .redirectErrorStream(true)
+        .start()
+
+    return process.inputStream.bufferedReader().use { it.readText() }.trim()
 }
 
 sourceSets {

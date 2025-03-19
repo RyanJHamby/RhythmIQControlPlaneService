@@ -23,6 +23,11 @@ public class CreateProfileLambdaHandler implements RequestHandler<APIGatewayProx
     private static final String TABLE_NAME = "Profiles";
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
+    // No-args constructor for AWS Lambda
+    public CreateProfileLambdaHandler() {
+        this(DynamoDbClient.create()); // Provide a default instance
+    }
+
     @Inject
     public CreateProfileLambdaHandler(DynamoDbClient dynamoDbClient) {
         this.dynamoDbClient = dynamoDbClient;
