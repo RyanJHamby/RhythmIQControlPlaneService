@@ -60,9 +60,24 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+tasks.register<Zip>("packageLambda") {
+    dependsOn("jar")
+
+    val lambdaDir = layout.buildDirectory.dir("lambda")
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from({ zipTree(tasks.getByName<Jar>("jar").archiveFile) }) // Include the JAR
+    from(configurations.runtimeClasspath.get().files.map { if (it.isDirectory) it else zipTree(it) }) // Include dependencies
+
+    destinationDirectory.set(lambdaDir)
+    archiveFileName.set("lambda.zip")
+}
+
 tasks.register("buildInfra") {
     group = "infrastructure"
     description = "Install dependencies, compile TypeScript, and synthesize Terraform CDK"
+    dependsOn("packageLambda")
 
     doLast {
         exec {
@@ -102,20 +117,6 @@ openApiGenerate {
     configOptions.set(mapOf(
         "dateLibrary" to "java8"
     ))
-}
-
-tasks.register<Zip>("packageLambda") {
-    dependsOn("jar")
-
-    val lambdaDir = layout.buildDirectory.dir("lambda")
-
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-    from({ zipTree(tasks.getByName<Jar>("jar").archiveFile) }) // Include the JAR
-    from(configurations.runtimeClasspath.get().files.map { if (it.isDirectory) it else zipTree(it) }) // Include dependencies
-
-    destinationDirectory.set(lambdaDir)
-    archiveFileName.set("lambda.zip")
 }
 
 tasks.register("deployInfra") {
