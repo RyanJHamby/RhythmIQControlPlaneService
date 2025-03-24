@@ -105,6 +105,10 @@ export class ProfileStack extends TerraformStack {
       environment: {
         variables: { TABLE_NAME: dynamoTable.name },
       },
+      timeout: 10, // seconds
+      snapStart: {
+        applyOn: "Initialize" // Specify the applyOn property (can be "Initialize" or "Invoke")
+      },
     });
 
     const api = new ApiGatewayRestApi(this, "ProfilesAPI", {
