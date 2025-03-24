@@ -100,6 +100,8 @@ components:
     CreateProfileRequest:
       type: object
       properties:
+        username:
+          type: string
         name:
           type: string
         email:

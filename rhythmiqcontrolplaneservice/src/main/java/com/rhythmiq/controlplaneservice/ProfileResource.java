@@ -35,7 +35,21 @@ public class ProfileResource {
                             content = @Content(schema = @Schema(implementation = ConflictException.class)))
             })
     public Response createProfile(CreateProfileRequest request) {
-        return Response.status(Response.Status.CREATED).entity(new CreateProfileResponse()).build();
+        // You can access the username as request.getUsername()
+        String username = request.getUsername();
+
+        // Additional validation logic (if needed)
+        if (username == null || username.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ValidationException())
+                    .build();
+        }
+
+        // Logic for creating a profile (use request.getName(), request.getEmail(), etc.)
+        CreateProfileResponse response = new CreateProfileResponse();
+        // Logic to populate the response
+
+        return Response.status(Response.Status.CREATED).entity(response).build();
     }
 
     @GET

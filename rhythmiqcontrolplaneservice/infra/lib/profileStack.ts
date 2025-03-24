@@ -106,8 +106,9 @@ export class ProfileStack extends TerraformStack {
         variables: { TABLE_NAME: dynamoTable.name },
       },
       timeout: 10, // seconds
+      memorySize: 256, // MB
       snapStart: {
-        applyOn: "Initialize" // Specify the applyOn property (can be "Initialize" or "Invoke")
+        applyOn: "PublishedVersions",
       },
     });
 

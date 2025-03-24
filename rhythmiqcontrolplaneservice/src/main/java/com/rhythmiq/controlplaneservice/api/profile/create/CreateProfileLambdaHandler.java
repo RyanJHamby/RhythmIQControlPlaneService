@@ -47,6 +47,7 @@ public class CreateProfileLambdaHandler extends BaseLambdaHandler {
 
         // Store in DynamoDB
         Map<String, AttributeValue> item = new HashMap<>();
+        item.put("username", AttributeValue.builder().s(profileRequest.getUsername()).build());
         item.put("name", AttributeValue.builder().s(profileRequest.getName()).build());
         item.put("email", AttributeValue.builder().s(profileRequest.getEmail()).build());
 
