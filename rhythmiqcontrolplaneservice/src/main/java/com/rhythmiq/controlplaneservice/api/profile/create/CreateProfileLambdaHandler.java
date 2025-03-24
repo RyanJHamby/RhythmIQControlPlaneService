@@ -1,11 +1,10 @@
 package com.rhythmiq.controlplaneservice.api.profile.create;
 
 import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rhythmiq.controlplaneservice.common.BaseLambdaHandler;
 import com.rhythmiq.controlplaneservice.model.CreateProfileRequest;
 import com.rhythmiq.controlplaneservice.model.CreateProfileResponse;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -17,16 +16,10 @@ import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CreateProfileLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+public class CreateProfileLambdaHandler extends BaseLambdaHandler {
 
     private final DynamoDbClient dynamoDbClient;
     private static final String TABLE_NAME = "Profiles";
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
-    // No-args constructor for AWS Lambda
-    public CreateProfileLambdaHandler() {
-        this(DynamoDbClient.create()); // Provide a default instance
-    }
 
     @Inject
     public CreateProfileLambdaHandler(DynamoDbClient dynamoDbClient) {
@@ -35,13 +28,14 @@ public class CreateProfileLambdaHandler implements RequestHandler<APIGatewayProx
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
-        context.getLogger().log("Received request: " + request.getBody());
+        log.info("Received request: {}", request.getBody());
 
-        CreateProfileRequest profileRequest = null;
+        CreateProfileRequest profileRequest;
         try {
             profileRequest = objectMapper.readValue(request.getBody(), CreateProfileRequest.class);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error("Failed to parse request body", e);
+            return createErrorResponse(400, "Invalid request format.");
         }
 
         if (StringUtils.isBlank(profileRequest.getName())) {
@@ -63,6 +57,7 @@ public class CreateProfileLambdaHandler implements RequestHandler<APIGatewayProx
                     .build();
 
             dynamoDbClient.putItem(putItemRequest);
+            log.info("Profile created successfully: {}", profileRequest.getEmail());
 
             // Create success response
             CreateProfileResponse response = new CreateProfileResponse()
@@ -70,38 +65,8 @@ public class CreateProfileLambdaHandler implements RequestHandler<APIGatewayProx
             return createSuccessResponse(200, response);
 
         } catch (Exception e) {
-            context.getLogger().log("Error processing request: " + e.getMessage());
+            log.error("Error processing request", e);
             return createErrorResponse(500, "Failed to create profile.");
         }
-    }
-
-    private APIGatewayProxyResponseEvent createSuccessResponse(int statusCode, Object responseBody) throws Exception {
-        return new APIGatewayProxyResponseEvent()
-                .withStatusCode(statusCode)
-                .withHeaders(getHeaders())
-                .withBody(objectMapper.writeValueAsString(responseBody));
-    }
-
-    private APIGatewayProxyResponseEvent createErrorResponse(int statusCode, String errorMessage) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", errorMessage);
-
-        try {
-            return new APIGatewayProxyResponseEvent()
-                    .withStatusCode(statusCode)
-                    .withHeaders(getHeaders())
-                    .withBody(objectMapper.writeValueAsString(errorResponse));
-        } catch (Exception e) {
-            return new APIGatewayProxyResponseEvent()
-                    .withStatusCode(500)
-                    .withHeaders(getHeaders())
-                    .withBody("{\"error\": \"Internal Server Error\"}");
-        }
-    }
-
-    private Map<String, String> getHeaders() {
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type", "application/json");
-        return headers;
     }
 }
