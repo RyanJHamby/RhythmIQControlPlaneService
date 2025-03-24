@@ -14,6 +14,7 @@ import { LambdaPermission } from "@cdktf/provider-aws/lib/lambda-permission";
 import { DynamodbTable } from "@cdktf/provider-aws/lib/dynamodb-table";
 import * as path from "path";
 import * as fs from "fs";
+import * as crypto from "crypto";
 
 export class ProfileStack extends TerraformStack {
   constructor(scope: App, id: string) {
@@ -73,21 +74,23 @@ export class ProfileStack extends TerraformStack {
       hashKey: "username",
     });
 
-    // Upload Lambda ZIP to S3
+    // Upload Lambda ZIP to S3 on every deployment
     const bucket = new S3Bucket(this, "LambdaBucket", {
-      bucketPrefix: "lambda-deployment-",
+      bucket: "rhythmiq-lambda-deployments",
     });
 
     const lambdaZipPath = path.resolve(__dirname, "../../build/lambda/lambda.zip");
-
     if (!fs.existsSync(lambdaZipPath)) {
       throw new Error(`Lambda ZIP file not found at ${lambdaZipPath}. Run ./gradlew packageLambda first.`);
     }
+
+    const fileHash = crypto.createHash("sha256").update(fs.readFileSync(lambdaZipPath)).digest("hex");
 
     const lambdaS3Object = new S3Object(this, "LambdaS3Object", {
       bucket: bucket.id,
       key: "lambda.zip",
       source: lambdaZipPath,
+      sourceHash: fileHash,
     });
 
     const lambda = new LambdaFunction(this, "CreateProfileLambda", {
