@@ -77,6 +77,7 @@ export class ProfileStack extends TerraformStack {
     // Upload Lambda ZIP to S3 on every deployment
     const bucket = new S3Bucket(this, "LambdaBucket", {
       bucket: "rhythmiq-lambda-deployments",
+      versioning: { enabled: false },
     });
 
     const lambdaZipPath = path.resolve(__dirname, "../../build/lambda/lambda.zip");
@@ -91,6 +92,7 @@ export class ProfileStack extends TerraformStack {
       key: "lambda.zip",
       source: lambdaZipPath,
       sourceHash: fileHash,
+      storageClass: "ONEZONE_IA",
     });
 
     const lambda = new LambdaFunction(this, "CreateProfileLambda", {
