@@ -1,12 +1,14 @@
 package com.rhythmiq.controlplaneservice.api.profile.create;
 
 import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.rhythmiq.controlplaneservice.common.BaseLambdaHandler;
 import com.rhythmiq.controlplaneservice.model.CreateProfileRequest;
 import com.rhythmiq.controlplaneservice.model.CreateProfileResponse;
+import lombok.extern.log4j.Log4j2;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
@@ -19,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+@Log4j2
 public class CreateProfileLambdaHandler extends BaseLambdaHandler {
 
     private final DynamoDbClient dynamoDbClient;
@@ -31,7 +34,9 @@ public class CreateProfileLambdaHandler extends BaseLambdaHandler {
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
-        log.info("Received request: {}", request.getBody());
+        LambdaLogger logger = context.getLogger();
+
+        logger.log("Received request: " + request.getBody());
 
         CreateProfileRequest profileRequest;
         try {
@@ -62,6 +67,8 @@ public class CreateProfileLambdaHandler extends BaseLambdaHandler {
         item.put("username", AttributeValue.builder().s(profileRequest.getEmail()).build());
 
         try {
+            System.out.println("DEBUG: Lambda is running...");
+
             // Add condition to ensure email uniqueness
             PutItemRequest putItemRequest = PutItemRequest.builder()
                     .tableName(TABLE_NAME)

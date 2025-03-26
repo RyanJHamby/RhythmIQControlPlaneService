@@ -23,7 +23,7 @@ dependencies {
 
     implementation("org.apache.logging.log4j:log4j-api:2.22.1")
     implementation("org.apache.logging.log4j:log4j-core:2.22.1")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.22.1") // Bridges SLF4J to Log4j2
+    implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.22.1")
 
     implementation("com.fasterxml.jackson.core:jackson-core:2.16.1")
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.16.1")
@@ -47,15 +47,11 @@ dependencies {
     // AWS Lambda Dependencies
     implementation("com.amazonaws:aws-lambda-java-core:1.2.3")
     implementation("com.amazonaws:aws-lambda-java-events:3.11.0")
+    implementation("com.amazonaws:aws-lambda-java-log4j2:1.6.0")
     implementation("software.amazon.awssdk:dynamodb:2.20.123") // Use latest AWS SDK version
     implementation("software.amazon.awssdk:core:2.20.123") // AWS core utilities
     implementation("software.amazon.awssdk:auth:2.20.123") // AWS authentication
     implementation("software.amazon.awssdk:regions:2.20.123") // AWS region utilities
-
-    // Logging
-    implementation("org.slf4j:slf4j-simple:2.0.9")
-    implementation("org.slf4j:slf4j-api:2.0.13")
-    implementation("ch.qos.logback:logback-classic:1.2.11")
 
     // Unit Testing
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
