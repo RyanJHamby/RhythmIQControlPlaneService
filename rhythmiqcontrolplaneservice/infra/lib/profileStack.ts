@@ -107,9 +107,6 @@ export class ProfileStack extends TerraformStack {
       },
       timeout: 10, // seconds
       memorySize: 256, // MB
-      snapStart: {
-        applyOn: "PublishedVersions",
-      },
     });
 
     const api = new ApiGatewayRestApi(this, "ProfilesAPI", {
