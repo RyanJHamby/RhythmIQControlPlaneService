@@ -27,6 +27,11 @@ public class CreateProfileLambdaHandler extends BaseLambdaHandler {
     private final DynamoDbClient dynamoDbClient;
     private static final String TABLE_NAME = "Profiles";
 
+    // Public no-argument constructor, required by AWS Lambda
+    public CreateProfileLambdaHandler() {
+        this.dynamoDbClient = DynamoDbClient.create();  // DynamoDbClient is instantiated directly here
+    }
+
     @Inject
     public CreateProfileLambdaHandler(DynamoDbClient dynamoDbClient) {
         this.dynamoDbClient = dynamoDbClient;
@@ -92,7 +97,7 @@ public class CreateProfileLambdaHandler extends BaseLambdaHandler {
             return createErrorResponse(409, "Email address already in use.");
         } catch (Exception e) {
             log.error("Error processing request", e);
-            return createErrorResponse(500, "Failed to create profile.");
+            return createErrorResponse(500, "Failed to create profile :/.");
         }
     }
 }

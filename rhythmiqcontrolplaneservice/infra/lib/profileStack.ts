@@ -78,6 +78,10 @@ export class ProfileStack extends TerraformStack {
     const bucket = new S3Bucket(this, "LambdaBucket", {
       bucket: "rhythmiq-lambda-deployments",
       versioning: { enabled: false },
+      lifecycleRule: [{
+        enabled: true,
+        expiration: { days: 1 },
+      }],
     });
 
     const lambdaZipPath = path.resolve(__dirname, "../../build/lambda/lambda.zip");
@@ -89,7 +93,7 @@ export class ProfileStack extends TerraformStack {
 
     const lambdaS3Object = new S3Object(this, "LambdaS3Object", {
       bucket: bucket.id,
-      key: "lambda.zip",
+      key: `lambda-${fileHash}.zip`,  // Use hash in key to force updates
       source: lambdaZipPath,
       sourceHash: fileHash,
       storageClass: "ONEZONE_IA",
@@ -101,12 +105,15 @@ export class ProfileStack extends TerraformStack {
       handler: "com.rhythmiq.controlplaneservice.api.profile.create.CreateProfileLambdaHandler",
       role: lambdaRole.arn,
       s3Bucket: bucket.id,
-      s3Key: lambdaS3Object.key,
+      s3Key: lambdaS3Object.key,  // Ensure Lambda uses the updated key
       environment: {
         variables: { TABLE_NAME: dynamoTable.name },
       },
-      timeout: 10, // seconds
-      memorySize: 256, // MB
+      timeout: 10,
+      memorySize: 256,
+      snapStart: {
+          applyOn: "PublishedVersions",
+      },
     });
 
     const api = new ApiGatewayRestApi(this, "ProfilesAPI", {
