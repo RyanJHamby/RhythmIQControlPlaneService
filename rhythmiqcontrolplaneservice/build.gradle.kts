@@ -47,7 +47,6 @@ dependencies {
     // AWS Lambda Dependencies
     implementation("com.amazonaws:aws-lambda-java-core:1.2.3")
     implementation("com.amazonaws:aws-lambda-java-events:3.11.0")
-    implementation("com.amazonaws:aws-lambda-java-log4j2:1.6.0")
     implementation("software.amazon.awssdk:dynamodb:2.20.123") // Use latest AWS SDK version
     implementation("software.amazon.awssdk:core:2.20.123") // AWS core utilities
     implementation("software.amazon.awssdk:auth:2.20.123") // AWS authentication

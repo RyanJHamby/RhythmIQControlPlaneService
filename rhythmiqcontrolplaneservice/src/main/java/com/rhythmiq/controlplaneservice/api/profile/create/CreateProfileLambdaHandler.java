@@ -1,7 +1,6 @@
 package com.rhythmiq.controlplaneservice.api.profile.create;
 
 import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -39,9 +38,6 @@ public class CreateProfileLambdaHandler extends BaseLambdaHandler {
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
-        LambdaLogger logger = context.getLogger();
-
-        logger.log("Received request: " + request.getBody());
 
         CreateProfileRequest profileRequest;
         try {
@@ -72,8 +68,6 @@ public class CreateProfileLambdaHandler extends BaseLambdaHandler {
         item.put("username", AttributeValue.builder().s(profileRequest.getEmail()).build());
 
         try {
-            System.out.println("DEBUG: Lambda is running...");
-
             // Add condition to ensure email uniqueness
             PutItemRequest putItemRequest = PutItemRequest.builder()
                     .tableName(TABLE_NAME)
