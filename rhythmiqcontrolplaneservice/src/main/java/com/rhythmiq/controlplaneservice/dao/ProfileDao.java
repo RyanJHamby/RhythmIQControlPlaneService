@@ -201,11 +201,16 @@ public class ProfileDao {
                     .map(this::mapToProfileSummary)
                     .collect(Collectors.toList()));
 
-            lastEvaluatedKey = result.lastEvaluatedKey() != null ? result.lastEvaluatedKey().get("profile_id").s() : null;
+            Map<String, AttributeValue> lastKey = result.lastEvaluatedKey();
+            lastEvaluatedKey = (lastKey != null && lastKey.get("profile_id") != null) 
+                ? lastKey.get("profile_id").s() 
+                : null;
+            if (lastEvaluatedKey != null) {
             scanRequest = ScanRequest.builder()
                     .tableName(TABLE_NAME)
                     .exclusiveStartKey(result.lastEvaluatedKey())
                     .build();
+            }
         } while (lastEvaluatedKey != null);
 
         return ListProfilesResponse.builder()
@@ -215,12 +220,17 @@ public class ProfileDao {
 
     private ProfileSummary mapToProfileSummary(Map<String, AttributeValue> item) {
         return ProfileSummary.builder()
-                .profileId(item.get("profile_id").s())
-                .username(item.get("username").s())
-                .firstName(item.get("first_name").s())
-                .lastName(item.get("last_name").s())
-                .email(item.get("email").s())
-                .build();
+            .profileId(getStringValue(item, "profile_id"))
+            .username(getStringValue(item, "username"))
+            .firstName(getStringValue(item, "first_name"))
+            .lastName(getStringValue(item, "last_name"))
+            .email(getStringValue(item, "email"))
+            .build();
+    }
+
+    private String getStringValue(Map<String, AttributeValue> item, String key) {
+        AttributeValue value = item.get(key);
+        return value != null ? value.s() : null;
     }
 
     private Profile mapToProfile(Map<String, AttributeValue> item) {

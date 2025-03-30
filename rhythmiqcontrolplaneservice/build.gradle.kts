@@ -53,6 +53,8 @@ dependencies {
     // Unit Testing
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
     testImplementation("org.mockito:mockito-core:5.5.0")
+    testImplementation("org.glassfish.jersey.core:jersey-common:3.1.5")
+    testImplementation("org.glassfish.jersey.inject:jersey-hk2:3.1.5")
 }
 
 tasks.withType<Test> {

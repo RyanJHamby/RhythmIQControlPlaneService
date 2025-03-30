@@ -2,6 +2,7 @@ package com.rhythmiq.controlplaneservice;
 
 import com.rhythmiq.controlplaneservice.model.*;
 import com.rhythmiq.controlplaneservice.exception.ValidationException;
+import com.rhythmiq.controlplaneservice.dao.ProfileDao;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
@@ -14,23 +15,27 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.util.Map;
+
 @Path("/profiles")
 public class ProfileResource {
+    private final ProfileDao profileDao;
+
+    public ProfileResource(ProfileDao profileDao) {
+        this.profileDao = profileDao;
+    }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response createProfile(CreateProfileRequest request) {
-        if (request.getUsername() == null || request.getUsername().isEmpty()) {
+        if (request.getUsername() == null || request.getUsername().isEmpty() || request.getUsername().length() < 3) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ValidationException())
+                    .entity(new ValidationException("Username must be at least 3 characters long", Map.of("username", 1)))
                     .build();
         }
 
-        CreateProfileResponse response = CreateProfileResponse.builder()
-                .message("Profile created successfully")
-                .build();
-
+        CreateProfileResponse response = profileDao.createProfile(request);
         return Response.status(Response.Status.CREATED).entity(response).build();
     }
 
@@ -38,7 +43,13 @@ public class ProfileResource {
     @Path("/{profileId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getProfile(@PathParam("profileId") String profileId) {
-        return Response.ok(GetProfileResponse.builder().build()).build();
+        GetProfileResponse response = profileDao.getProfile(profileId);
+        if (!response.isSuccess()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(response)
+                    .build();
+        }
+        return Response.ok(response).build();
     }
 
     @PUT
@@ -46,20 +57,44 @@ public class ProfileResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateProfile(@PathParam("profileId") String profileId, UpdateProfileRequest request) {
-        return Response.ok(UpdateProfileResponse.builder()
-                .message("Profile updated successfully")
-                .build()).build();
+        if (request.getUsername() != null && (request.getUsername().isEmpty() || request.getUsername().length() < 3)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ValidationException("Username must be at least 3 characters long", Map.of("username", 1)))
+                    .build();
+        }
+
+        try {
+            UpdateProfileResponse response = profileDao.updateProfile(profileId, request);
+            return Response.ok(response).build();
+        } catch (IllegalStateException e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(GetProfileResponse.builder()
+                            .success(false)
+                            .message("Profile not found")
+                            .build())
+                    .build();
+        }
     }
 
     @DELETE
     @Path("/{profileId}")
     public Response deleteProfile(@PathParam("profileId") String profileId) {
-        return Response.noContent().build();
+        try {
+            profileDao.deleteProfile(profileId);
+            return Response.noContent().build();
+        } catch (IllegalStateException e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(GetProfileResponse.builder()
+                            .success(false)
+                            .message("Profile not found")
+                            .build())
+                    .build();
+        }
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response listProfiles() {
-        return Response.ok(ListProfilesResponse.builder().build()).build();
+        return Response.ok(profileDao.listProfiles()).build();
     }
 }

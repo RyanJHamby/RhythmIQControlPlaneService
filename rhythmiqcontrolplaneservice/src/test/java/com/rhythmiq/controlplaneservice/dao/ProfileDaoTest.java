@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.dynamodb.model.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -227,31 +228,34 @@ class ProfileDaoTest {
     @Test
     void listProfiles_Success() {
         // Given
-        Map<String, AttributeValue> item1 = Map.of(
-            "profile_id", AttributeValue.builder().s("id1").build(),
-            "email", AttributeValue.builder().s("test1@example.com").build(),
-            "username", AttributeValue.builder().s("user1").build(),
-            "first_name", AttributeValue.builder().s("Test1").build(),
-            "last_name", AttributeValue.builder().s("User1").build()
-        );
-        Map<String, AttributeValue> item2 = Map.of(
-            "profile_id", AttributeValue.builder().s("id2").build(),
-            "email", AttributeValue.builder().s("test2@example.com").build(),
-            "username", AttributeValue.builder().s("user2").build(),
-            "first_name", AttributeValue.builder().s("Test2").build(),
-            "last_name", AttributeValue.builder().s("User2").build()
-        );
+        Map<String, AttributeValue> item = new HashMap<>();
+        item.put("profile_id", AttributeValue.builder().s("id1").build());
+        item.put("username", AttributeValue.builder().s("user1").build());
+        item.put("first_name", AttributeValue.builder().s("Test1").build());
+        item.put("last_name", AttributeValue.builder().s("Last1").build());
+        item.put("email", AttributeValue.builder().s("test1@example.com").build());
+
+        ScanResponse scanResponse = ScanResponse.builder()
+            .items(List.of(item))
+            .lastEvaluatedKey(null)  // Explicitly set to null to indicate no more pages
+            .build();
 
         when(dynamoDbClient.scan(any(ScanRequest.class)))
-            .thenReturn(ScanResponse.builder().items(List.of(item1, item2)).build());
+            .thenReturn(scanResponse);
 
         // When
         ListProfilesResponse response = profileDao.listProfiles();
 
         // Then
         assertNotNull(response);
-        assertEquals(2, response.getProfiles().size());
-        assertEquals("id1", response.getProfiles().get(0).getProfileId());
-        assertEquals("id2", response.getProfiles().get(1).getProfileId());
+        assertEquals(1, response.getProfiles().size());
+        ProfileSummary profile = response.getProfiles().get(0);
+        assertEquals("id1", profile.getProfileId());
+        assertEquals("user1", profile.getUsername());
+        assertEquals("Test1", profile.getFirstName());
+        assertEquals("Last1", profile.getLastName());
+        assertEquals("test1@example.com", profile.getEmail());
+
+        verify(dynamoDbClient).scan(any(ScanRequest.class));
     }
 }
