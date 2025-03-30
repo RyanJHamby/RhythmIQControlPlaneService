@@ -1,4 +1,4 @@
-rootProject.name = "src.main.java.com.rhythmiq.controlplaneservice"
+rootProject.name = "rhythmiq-control-plane-service"
 
 pluginManagement {
     repositories {
@@ -7,5 +7,3 @@ pluginManagement {
         mavenCentral()
     }
 }
-include("app")
-include("infra")

@@ -26,32 +26,46 @@ class ProfileDaoTest {
 
     @Test
     void createProfile_Success() {
-        CreateProfileRequest request = new CreateProfileRequest().name("John Doe").email("john@example.com");
+        CreateProfileRequest request = CreateProfileRequest.builder()
+                .username("johndoe")
+                .firstName("John")
+                .lastName("Doe")
+                .email("john@example.com")
+                .phoneNumber("1234567890")
+                .password("password123")
+                .build();
 
         when(dynamoDbClient.putItem(any(PutItemRequest.class))).thenReturn(PutItemResponse.builder().build());
 
         CreateProfileResponse response = profileDao.createProfile(request);
 
         assertNotNull(response.getId());
-        assertEquals("John Doe", response.getName());
+        assertEquals("Profile created successfully", response.getMessage());
 
         ArgumentCaptor<PutItemRequest> captor = ArgumentCaptor.forClass(PutItemRequest.class);
         verify(dynamoDbClient).putItem(captor.capture());
         Map<String, AttributeValue> item = captor.getValue().item();
 
-        assertEquals("John Doe", item.get("name").s());
+        assertEquals("johndoe", item.get("username").s());
         assertEquals("john@example.com", item.get("email").s());
     }
 
     @Test
     void createProfile_EmailAlreadyExists() {
-        CreateProfileRequest request = new CreateProfileRequest().name("John Doe").email("john@example.com");
+        CreateProfileRequest request = CreateProfileRequest.builder()
+                .username("johndoe")
+                .firstName("John")
+                .lastName("Doe")
+                .email("john@example.com")
+                .phoneNumber("1234567890")
+                .password("password123")
+                .build();
 
         when(dynamoDbClient.putItem(any(PutItemRequest.class)))
                 .thenThrow(ConditionalCheckFailedException.builder().build());
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> profileDao.createProfile(request));
 
-        assertTrue(exception.getMessage().contains("Email already exists"));
+        assertTrue(exception.getMessage().contains("Email or username already exists"));
     }
 }
