@@ -1,12 +1,10 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSpotify } from '../../contexts/SpotifyContext';
 
-interface SpotifyCallbackProps {
-  onSuccess?: (token: string) => void;
-}
-
-export const SpotifyCallback: React.FC<SpotifyCallbackProps> = ({ onSuccess }) => {
+export const SpotifyCallback: React.FC = () => {
   const navigate = useNavigate();
+  const { handleAuthSuccess } = useSpotify();
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -27,31 +25,16 @@ export const SpotifyCallback: React.FC<SpotifyCallbackProps> = ({ onSuccess }) =
       }
 
       try {
-        const response = await fetch('/api/spotify/token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ code }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to exchange code for token');
-        }
-
-        const data = await response.json();
-        if (onSuccess) {
-          onSuccess(data.access_token);
-        }
+        await handleAuthSuccess(code);
         navigate('/dashboard');
       } catch (error) {
-        console.error('Error exchanging code for token:', error);
+        console.error('Error handling Spotify callback:', error);
         navigate('/login');
       }
     };
 
     handleCallback();
-  }, [navigate, onSuccess]);
+  }, [navigate, handleAuthSuccess]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">

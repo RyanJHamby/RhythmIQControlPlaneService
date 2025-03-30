@@ -2,6 +2,7 @@ plugins {
     id("java")
     id("idea")
     id("io.freefair.lombok") version "8.6"
+    id("application")
 }
 
 group = "com.rhythmiq.controlplaneservice"
@@ -58,6 +59,9 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.5.0")
     testImplementation("org.glassfish.jersey.core:jersey-common:3.1.5")
     testImplementation("org.glassfish.jersey.inject:jersey-hk2:3.1.5")
+
+    implementation("org.glassfish.jersey.containers:jersey-container-grizzly2-http:3.1.5")
+    implementation("org.glassfish.jersey.inject:jersey-hk2:3.1.5")
 }
 
 tasks.withType<Test> {
@@ -130,4 +134,9 @@ tasks.named<Jar>("jar") {
 tasks.clean {
     // Delete the cdktf.out directory in the infra folder
     delete(file("$rootDir/infra/cdktf.out"))
+}
+
+application {
+    mainClass.set("com.rhythmiq.controlplaneservice.Main")
+    applicationDefaultJvmArgs = listOf("-DSPOTIFY_REDIRECT_URI=http://localhost:3000/api/spotify/callback")
 }
