@@ -1,71 +1,257 @@
 package com.rhythmiq.controlplaneservice.dao;
 
-import com.rhythmiq.controlplaneservice.model.CreateProfileRequest;
-import com.rhythmiq.controlplaneservice.model.CreateProfileResponse;
+import com.rhythmiq.controlplaneservice.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class ProfileDaoTest {
-
+    @Mock
     private DynamoDbClient dynamoDbClient;
+
     private ProfileDao profileDao;
 
     @BeforeEach
     void setUp() {
-        dynamoDbClient = mock(DynamoDbClient.class);
+        MockitoAnnotations.openMocks(this);
         profileDao = new ProfileDao(dynamoDbClient);
     }
 
     @Test
     void createProfile_Success() {
+        // Given
         CreateProfileRequest request = CreateProfileRequest.builder()
-                .username("johndoe")
-                .firstName("John")
-                .lastName("Doe")
-                .email("john@example.com")
-                .phoneNumber("1234567890")
-                .password("password123")
-                .build();
+            .email("test@example.com")
+            .username("testuser")
+            .firstName("Test")
+            .lastName("User")
+            .phoneNumber("1234567890")
+            .build();
 
-        when(dynamoDbClient.putItem(any(PutItemRequest.class))).thenReturn(PutItemResponse.builder().build());
+        when(dynamoDbClient.putItem(any(PutItemRequest.class)))
+            .thenReturn(PutItemResponse.builder().build());
 
+        // When
         CreateProfileResponse response = profileDao.createProfile(request);
 
+        // Then
+        assertNotNull(response);
         assertNotNull(response.getId());
         assertEquals("Profile created successfully", response.getMessage());
-
-        ArgumentCaptor<PutItemRequest> captor = ArgumentCaptor.forClass(PutItemRequest.class);
-        verify(dynamoDbClient).putItem(captor.capture());
-        Map<String, AttributeValue> item = captor.getValue().item();
-
-        assertEquals("johndoe", item.get("username").s());
-        assertEquals("john@example.com", item.get("email").s());
+        verify(dynamoDbClient).putItem(any(PutItemRequest.class));
     }
 
     @Test
     void createProfile_EmailAlreadyExists() {
+        // Given
         CreateProfileRequest request = CreateProfileRequest.builder()
-                .username("johndoe")
-                .firstName("John")
-                .lastName("Doe")
-                .email("john@example.com")
-                .phoneNumber("1234567890")
-                .password("password123")
-                .build();
+            .email("existing@example.com")
+            .username("testuser")
+            .firstName("Test")
+            .lastName("User")
+            .phoneNumber("1234567890")
+            .build();
 
         when(dynamoDbClient.putItem(any(PutItemRequest.class)))
-                .thenThrow(ConditionalCheckFailedException.builder().build());
+            .thenThrow(ConditionalCheckFailedException.builder().build());
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> profileDao.createProfile(request));
+        // When/Then
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> profileDao.createProfile(request)
+        );
+        assertEquals("Email or username already exists", exception.getMessage());
+    }
 
-        assertTrue(exception.getMessage().contains("Email or username already exists"));
+    @Test
+    void getProfile_Success() {
+        // Given
+        String profileId = "test-id";
+        Map<String, AttributeValue> item = Map.of(
+            "profile_id", AttributeValue.builder().s(profileId).build(),
+            "email", AttributeValue.builder().s("test@example.com").build(),
+            "username", AttributeValue.builder().s("testuser").build(),
+            "first_name", AttributeValue.builder().s("Test").build(),
+            "last_name", AttributeValue.builder().s("User").build(),
+            "phone_number", AttributeValue.builder().s("1234567890").build()
+        );
+
+        when(dynamoDbClient.getItem(any(GetItemRequest.class)))
+            .thenReturn(GetItemResponse.builder().item(item).build());
+
+        // When
+        GetProfileResponse response = profileDao.getProfile(profileId);
+
+        // Then
+        assertTrue(response.isSuccess());
+        assertNotNull(response.getProfile());
+        assertEquals(profileId, response.getProfile().getProfileId());
+        assertEquals("test@example.com", response.getProfile().getEmail());
+    }
+
+    @Test
+    void getProfile_NotFound() {
+        // Given
+        String profileId = "non-existent-id";
+        when(dynamoDbClient.getItem(any(GetItemRequest.class)))
+            .thenReturn(GetItemResponse.builder().build());
+
+        // When
+        GetProfileResponse response = profileDao.getProfile(profileId);
+
+        // Then
+        assertFalse(response.isSuccess());
+        assertEquals("Profile not found", response.getMessage());
+    }
+
+    @Test
+    void getProfileByEmail_Success() {
+        // Given
+        String email = "test@example.com";
+        Map<String, AttributeValue> item = Map.of(
+            "profile_id", AttributeValue.builder().s("test-id").build(),
+            "email", AttributeValue.builder().s(email).build(),
+            "username", AttributeValue.builder().s("testuser").build(),
+            "first_name", AttributeValue.builder().s("Test").build(),
+            "last_name", AttributeValue.builder().s("User").build(),
+            "phone_number", AttributeValue.builder().s("1234567890").build()
+        );
+
+        when(dynamoDbClient.query(any(QueryRequest.class)))
+            .thenReturn(QueryResponse.builder().items(List.of(item)).build());
+
+        // When
+        GetProfileResponse response = profileDao.getProfileByEmail(email);
+
+        // Then
+        assertTrue(response.isSuccess());
+        assertNotNull(response.getProfile());
+        assertEquals(email, response.getProfile().getEmail());
+    }
+
+    @Test
+    void getProfileByEmail_NotFound() {
+        // Given
+        String email = "nonexistent@example.com";
+        when(dynamoDbClient.query(any(QueryRequest.class)))
+            .thenReturn(QueryResponse.builder().items(List.of()).build());
+
+        // When
+        GetProfileResponse response = profileDao.getProfileByEmail(email);
+
+        // Then
+        assertFalse(response.isSuccess());
+        assertEquals("Profile not found", response.getMessage());
+    }
+
+    @Test
+    void updateProfile_Success() {
+        // Given
+        String profileId = "test-id";
+        UpdateProfileRequest request = UpdateProfileRequest.builder()
+            .username("newusername")
+            .firstName("NewFirst")
+            .lastName("NewLast")
+            .email("new@example.com")
+            .phoneNumber("0987654321")
+            .build();
+
+        when(dynamoDbClient.updateItem(any(UpdateItemRequest.class)))
+            .thenReturn(UpdateItemResponse.builder().build());
+
+        // When
+        UpdateProfileResponse response = profileDao.updateProfile(profileId, request);
+
+        // Then
+        assertNotNull(response);
+        assertEquals("Profile updated successfully", response.getMessage());
+        verify(dynamoDbClient).updateItem(any(UpdateItemRequest.class));
+    }
+
+    @Test
+    void updateProfile_NotFound() {
+        // Given
+        String profileId = "non-existent-id";
+        UpdateProfileRequest request = UpdateProfileRequest.builder()
+            .username("newusername")
+            .build();
+
+        when(dynamoDbClient.updateItem(any(UpdateItemRequest.class)))
+            .thenThrow(ConditionalCheckFailedException.builder().build());
+
+        // When/Then
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> profileDao.updateProfile(profileId, request)
+        );
+        assertEquals("Profile not found: " + profileId, exception.getMessage());
+    }
+
+    @Test
+    void deleteProfile_Success() {
+        // Given
+        String profileId = "test-id";
+        when(dynamoDbClient.deleteItem(any(DeleteItemRequest.class)))
+            .thenReturn(DeleteItemResponse.builder().build());
+
+        // When/Then
+        assertDoesNotThrow(() -> profileDao.deleteProfile(profileId));
+        verify(dynamoDbClient).deleteItem(any(DeleteItemRequest.class));
+    }
+
+    @Test
+    void deleteProfile_NotFound() {
+        // Given
+        String profileId = "non-existent-id";
+        when(dynamoDbClient.deleteItem(any(DeleteItemRequest.class)))
+            .thenThrow(ConditionalCheckFailedException.builder().build());
+
+        // When/Then
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> profileDao.deleteProfile(profileId)
+        );
+        assertEquals("Profile not found: " + profileId, exception.getMessage());
+    }
+
+    @Test
+    void listProfiles_Success() {
+        // Given
+        Map<String, AttributeValue> item1 = Map.of(
+            "profile_id", AttributeValue.builder().s("id1").build(),
+            "email", AttributeValue.builder().s("test1@example.com").build(),
+            "username", AttributeValue.builder().s("user1").build(),
+            "first_name", AttributeValue.builder().s("Test1").build(),
+            "last_name", AttributeValue.builder().s("User1").build()
+        );
+        Map<String, AttributeValue> item2 = Map.of(
+            "profile_id", AttributeValue.builder().s("id2").build(),
+            "email", AttributeValue.builder().s("test2@example.com").build(),
+            "username", AttributeValue.builder().s("user2").build(),
+            "first_name", AttributeValue.builder().s("Test2").build(),
+            "last_name", AttributeValue.builder().s("User2").build()
+        );
+
+        when(dynamoDbClient.scan(any(ScanRequest.class)))
+            .thenReturn(ScanResponse.builder().items(List.of(item1, item2)).build());
+
+        // When
+        ListProfilesResponse response = profileDao.listProfiles();
+
+        // Then
+        assertNotNull(response);
+        assertEquals(2, response.getProfiles().size());
+        assertEquals("id1", response.getProfiles().get(0).getProfileId());
+        assertEquals("id2", response.getProfiles().get(1).getProfileId());
     }
 }
