@@ -1,7 +1,6 @@
 package com.rhythmiq.controlplaneservice.dao;
 
 import com.rhythmiq.controlplaneservice.model.*;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
@@ -9,7 +8,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -86,7 +89,7 @@ public class ProfileDao {
     public GetProfileResponse getProfileByEmail(String email) {
         try {
             QueryRequest request = QueryRequest.builder()
-                .tableName("Profiles")
+                .tableName(TABLE_NAME)
                 .indexName("EmailIndex")
                 .keyConditionExpression("email = :email")
                 .expressionAttributeValues(Map.of(":email", AttributeValue.builder().s(email).build()))
@@ -140,12 +143,6 @@ public class ProfileDao {
             updateExpression.append(", last_name = :last_name");
             expressionAttributeNames.put("#last_name", "last_name");
             expressionAttributeValues.put(":last_name", AttributeValue.builder().s(request.getLastName()).build());
-        }
-
-        if (request.getEmail() != null) {
-            updateExpression.append(", email = :email");
-            expressionAttributeNames.put("#email", "email");
-            expressionAttributeValues.put(":email", AttributeValue.builder().s(request.getEmail()).build());
         }
 
         if (request.getPhoneNumber() != null) {
@@ -202,14 +199,14 @@ public class ProfileDao {
                     .collect(Collectors.toList()));
 
             Map<String, AttributeValue> lastKey = result.lastEvaluatedKey();
-            lastEvaluatedKey = (lastKey != null && lastKey.get("profile_id") != null) 
+            lastEvaluatedKey = (lastKey != null && lastKey.containsKey("profile_id")) 
                 ? lastKey.get("profile_id").s() 
                 : null;
             if (lastEvaluatedKey != null) {
-            scanRequest = ScanRequest.builder()
-                    .tableName(TABLE_NAME)
-                    .exclusiveStartKey(result.lastEvaluatedKey())
-                    .build();
+                scanRequest = ScanRequest.builder()
+                        .tableName(TABLE_NAME)
+                        .exclusiveStartKey(result.lastEvaluatedKey())
+                        .build();
             }
         } while (lastEvaluatedKey != null);
 
@@ -235,12 +232,12 @@ public class ProfileDao {
 
     private Profile mapToProfile(Map<String, AttributeValue> item) {
         return Profile.builder()
-            .profileId(item.get("profile_id").s())
-            .username(item.get("username").s())
-            .firstName(item.get("first_name").s())
-            .lastName(item.get("last_name").s())
-            .email(item.get("email").s())
-            .phoneNumber(item.get("phone_number").s())
+            .profileId(getStringValue(item, "profile_id"))
+            .username(getStringValue(item, "username"))
+            .firstName(getStringValue(item, "first_name"))
+            .lastName(getStringValue(item, "last_name"))
+            .email(getStringValue(item, "email"))
+            .phoneNumber(getStringValue(item, "phone_number"))
             .build();
     }
 }
