@@ -1,0 +1,50 @@
+openapi: 3.0.0
+info:
+  title: Spotify Auth API
+  version: 1.0.0
+  description: API for handling Spotify authentication
+
+paths:
+  /spotify/token:
+    post:
+      summary: Exchange Spotify authorization code for access token
+      operationId: exchangeSpotifyToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  description: The authorization code received from Spotify
+      responses:
+        '200':
+          description: Successfully exchanged code for token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+                  refresh_token:
+                    type: string
+                  scope:
+                    type: string
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      x-amazon-apigateway-integration:
+        uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SpotifyAuthFunction.Arn}/invocations
+        passthroughBehavior: when_no_match
+        httpMethod: POST
+        type: aws_proxy 

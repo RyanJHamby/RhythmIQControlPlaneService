@@ -49,6 +49,9 @@ dependencies {
     implementation("software.amazon.awssdk:core:2.20.123") // AWS core utilities
     implementation("software.amazon.awssdk:auth:2.20.123") // AWS authentication
     implementation("software.amazon.awssdk:regions:2.20.123") // AWS region utilities
+    implementation("software.amazon.awssdk:ssm:2.24.12")
+    implementation("software.amazon.awssdk:apache-client:2.24.12")
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // Unit Testing
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
