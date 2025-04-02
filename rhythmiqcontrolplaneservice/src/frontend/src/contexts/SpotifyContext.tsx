@@ -50,18 +50,28 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const logout = () => {
     setIsAuthenticated(false);
     setUserProfile(null);
-    // Clear any stored tokens or session data
+    spotifyService.logout();
   };
 
   const handleAuthSuccess = async (code: string) => {
     try {
+      console.log('Starting auth success handling...');
       setLoading(true);
       setError(null);
+      
+      console.log('Exchanging code for token...');
       const tokenResponse = await spotifyService.exchangeCodeForToken(code);
+      console.log('Token exchange successful');
+      
+      console.log('Fetching user profile...');
       const profile = await spotifyService.getUserProfile();
+      console.log('Profile fetched:', profile);
+      
       setUserProfile(profile);
       setIsAuthenticated(true);
+      console.log('Auth state updated');
     } catch (err) {
+      console.error('Auth error:', err);
       setError(err instanceof Error ? err.message : 'Authentication failed');
       setIsAuthenticated(false);
       setUserProfile(null);

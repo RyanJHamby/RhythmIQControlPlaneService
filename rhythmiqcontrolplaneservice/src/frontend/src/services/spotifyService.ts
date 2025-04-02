@@ -1,9 +1,5 @@
 interface SpotifyTokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  refresh_token: string;
-  scope: string;
+  success: boolean;
 }
 
 interface SpotifyUserProfile {
@@ -15,6 +11,31 @@ interface SpotifyUserProfile {
     height: number;
     width: number;
   }>;
+}
+
+export interface SpotifyTrack {
+  track: {
+    id: string;
+    name: string;
+    artists: Array<{
+      name: string;
+    }>;
+    album: {
+      name: string;
+      images: Array<{
+        url: string;
+      }>;
+    };
+  };
+}
+
+export interface SpotifyLikedSongsResponse {
+  items: SpotifyTrack[];
+  total: number;
+  limit: number;
+  offset: number;
+  next: string | null;
+  previous: string | null;
 }
 
 class SpotifyService {
@@ -31,21 +52,6 @@ class SpotifyService {
     return SpotifyService.instance;
   }
 
-  setAccessToken(token: string, expiresIn: number) {
-    this.accessToken = token;
-    this.tokenExpiry = Date.now() + expiresIn * 1000;
-  }
-
-  private isTokenExpired(): boolean {
-    return !this.tokenExpiry || Date.now() >= this.tokenExpiry;
-  }
-
-  private async ensureValidToken(): Promise<void> {
-    if (!this.accessToken || this.isTokenExpired()) {
-      throw new Error('No valid access token');
-    }
-  }
-
   async exchangeCodeForToken(code: string): Promise<SpotifyTokenResponse> {
     const response = await fetch('/api/spotify/token', {
       method: 'POST',
@@ -53,24 +59,22 @@ class SpotifyService {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ code }),
+      credentials: 'include', // Important for cookies
     });
 
     if (!response.ok) {
       throw new Error('Failed to exchange code for token');
     }
 
-    const data = await response.json();
-    this.setAccessToken(data.access_token, data.expires_in);
-    return data;
+    return { success: true } as SpotifyTokenResponse;
   }
 
   async getUserProfile(): Promise<SpotifyUserProfile> {
-    await this.ensureValidToken();
-
-    const response = await fetch('https://api.spotify.com/v1/me', {
+    const response = await fetch('/api/spotify/me', {
       headers: {
-        Authorization: `Bearer ${this.accessToken}`,
+        'Content-Type': 'application/json',
       },
+      credentials: 'include', // Important for cookies
     });
 
     if (!response.ok) {
@@ -81,12 +85,11 @@ class SpotifyService {
   }
 
   async getUserPlaylists(): Promise<any> {
-    await this.ensureValidToken();
-
-    const response = await fetch('https://api.spotify.com/v1/me/playlists', {
+    const response = await fetch('/api/spotify/playlists', {
       headers: {
-        Authorization: `Bearer ${this.accessToken}`,
+        'Content-Type': 'application/json',
       },
+      credentials: 'include', // Important for cookies
     });
 
     if (!response.ok) {
@@ -97,12 +100,11 @@ class SpotifyService {
   }
 
   async getPlaylistTracks(playlistId: string): Promise<any> {
-    await this.ensureValidToken();
-
-    const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+    const response = await fetch(`/api/spotify/playlists/${playlistId}/tracks`, {
       headers: {
-        Authorization: `Bearer ${this.accessToken}`,
+        'Content-Type': 'application/json',
       },
+      credentials: 'include', // Important for cookies
     });
 
     if (!response.ok) {
@@ -110,6 +112,29 @@ class SpotifyService {
     }
 
     return response.json();
+  }
+
+  async getLikedSongs(): Promise<SpotifyLikedSongsResponse> {
+    const response = await fetch('/api/spotify/liked-songs', {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Important for cookies
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch liked songs');
+    }
+
+    return response.json();
+  }
+
+  logout() {
+    // The backend will handle clearing the cookies
+    fetch('/api/spotify/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
   }
 }
 

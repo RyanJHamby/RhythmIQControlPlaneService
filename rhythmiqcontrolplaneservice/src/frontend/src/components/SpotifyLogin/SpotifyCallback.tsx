@@ -1,40 +1,61 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSpotify } from '../../contexts/SpotifyContext';
 
 export const SpotifyCallback: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { handleAuthSuccess } = useSpotify();
+  const isProcessing = useRef(false);
+  const hasNavigated = useRef(false);
 
   useEffect(() => {
     const handleCallback = async () => {
-      const params = new URLSearchParams(window.location.search);
+      console.log('Starting callback handling...');
+      
+      if (isProcessing.current || hasNavigated.current) {
+        console.log('Already processing or navigated, skipping...');
+        return;
+      }
+
+      const params = new URLSearchParams(location.search);
       const code = params.get('code');
       const error = params.get('error');
 
+      console.log('URL params:', { code: code ? 'present' : 'missing', error });
+
       if (error) {
         console.error('Spotify auth error:', error);
-        navigate('/login');
+        hasNavigated.current = true;
+        navigate('/login', { replace: true });
         return;
       }
 
       if (!code) {
         console.error('No code received from Spotify');
-        navigate('/login');
+        hasNavigated.current = true;
+        navigate('/login', { replace: true });
         return;
       }
 
       try {
+        console.log('Processing auth code...');
+        isProcessing.current = true;
         await handleAuthSuccess(code);
-        navigate('/dashboard');
+        console.log('Auth success, navigating to dashboard...');
+        hasNavigated.current = true;
+        navigate('/dashboard', { replace: true });
       } catch (error) {
         console.error('Error handling Spotify callback:', error);
-        navigate('/login');
+        hasNavigated.current = true;
+        navigate('/login', { replace: true });
+      } finally {
+        isProcessing.current = false;
       }
     };
 
     handleCallback();
-  }, [navigate, handleAuthSuccess]);
+  }, [navigate, location, handleAuthSuccess]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">

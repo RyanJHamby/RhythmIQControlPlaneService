@@ -4,11 +4,15 @@ import { SpotifyProvider } from './contexts/SpotifyContext';
 import { LoginPage } from './pages/LoginPage';
 import { SpotifyCallback } from './components/SpotifyLogin/SpotifyCallback';
 import { useSpotify } from './contexts/SpotifyContext';
+import { LikedSongs } from './components/LikedSongs/LikedSongs';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, loading } = useSpotify();
 
+  console.log('PrivateRoute render:', { isAuthenticated, loading });
+
   if (loading) {
+    console.log('PrivateRoute: Loading...');
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -16,6 +20,7 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     );
   }
 
+  console.log('PrivateRoute: Auth check', { isAuthenticated });
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
@@ -55,7 +60,7 @@ const Dashboard: React.FC = () => {
       </nav>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {/* Add your dashboard content here */}
+        <LikedSongs />
       </main>
     </div>
   );
