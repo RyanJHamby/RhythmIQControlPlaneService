@@ -1,0 +1,68 @@
+.liked-songs-container {
+  padding: 8px;
+  background: #ffffff;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  max-width: 300px;
+}
+
+.liked-songs-container h2 {
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+  color: #1a1a1a;
+}
+
+.liked-songs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+
+.song-tile {
+  background: #f8f9fa;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.song-tile:hover {
+  transform: translateY(-2px);
+}
+
+.album-art {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.song-info {
+  padding: 4px;
+}
+
+.song-info h3 {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.song-info p {
+  margin: 2px 0;
+  font-size: 0.625rem;
+  color: #666;
+}
+
+.album-name {
+  color: #888;
+  font-size: 0.5rem;
+}
+
+.error {
+  color: #dc3545;
+  padding: 4px;
+  border-radius: 2px;
+  background: #f8d7da;
+  font-size: 0.75rem;
+} 
