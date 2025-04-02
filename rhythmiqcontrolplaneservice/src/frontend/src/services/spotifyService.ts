@@ -38,6 +38,23 @@ export interface SpotifyLikedSongsResponse {
   previous: string | null;
 }
 
+export interface SpotifyPlaylist {
+  id: string;
+  name: string;
+  images: { url: string }[];
+  tracks: {
+    total: number;
+  };
+  owner: {
+    display_name: string;
+  };
+}
+
+export interface SpotifyPlaylistsResponse {
+  items: SpotifyPlaylist[];
+  total: number;
+}
+
 class SpotifyService {
   private static instance: SpotifyService;
   private accessToken: string | null = null;
@@ -114,8 +131,8 @@ class SpotifyService {
     return response.json();
   }
 
-  async getLikedSongs(): Promise<SpotifyLikedSongsResponse> {
-    const response = await fetch('/api/spotify/liked-songs', {
+  async getLikedSongs(offset: number = 0): Promise<SpotifyLikedSongsResponse> {
+    const response = await fetch(`/api/spotify/liked-songs?offset=${offset}`, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -125,6 +142,22 @@ class SpotifyService {
 
     if (!response.ok) {
       throw new Error('Failed to fetch liked songs');
+    }
+
+    return response.json();
+  }
+
+  async getPlaylists(): Promise<SpotifyPlaylistsResponse> {
+    const response = await fetch('/api/spotify/playlists', {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch playlists');
     }
 
     return response.json();

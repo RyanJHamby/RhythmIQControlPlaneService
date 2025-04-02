@@ -1,4 +1,4 @@
-.liked-songs-container {
+.playlists-container {
   padding: 8px;
   background: #ffffff;
   border-radius: 4px;
@@ -7,14 +7,22 @@
   overflow: hidden;
 }
 
-.liked-songs-container h2 {
+.playlist-category {
+  margin-bottom: 16px;
+}
+
+.playlist-category:last-child {
+  margin-bottom: 0;
+}
+
+.playlist-category h2 {
   margin-bottom: 8px;
   font-size: 0.875rem;
   color: #1a1a1a;
   padding-left: 4px;
 }
 
-.liked-songs-grid {
+.playlists-grid {
   display: flex;
   overflow-x: auto;
   gap: 8px;
@@ -23,11 +31,11 @@
   -ms-overflow-style: none; /* IE and Edge */
 }
 
-.liked-songs-grid::-webkit-scrollbar {
+.playlists-grid::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
 
-.song-tile {
+.playlist-tile {
   flex: 0 0 120px;
   background: #f8f9fa;
   border-radius: 4px;
@@ -36,21 +44,21 @@
   cursor: pointer;
 }
 
-.song-tile:hover {
+.playlist-tile:hover {
   transform: scale(1.05);
 }
 
-.album-art {
+.playlist-art {
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
 }
 
-.song-info {
+.playlist-info {
   padding: 4px;
 }
 
-.song-info h3 {
+.playlist-info h3 {
   margin: 0;
   font-size: 0.75rem;
   color: #1a1a1a;
@@ -59,13 +67,13 @@
   text-overflow: ellipsis;
 }
 
-.song-info p {
+.playlist-info p {
   margin: 2px 0;
   font-size: 0.625rem;
   color: #666;
 }
 
-.album-name {
+.track-count {
   color: #888;
   font-size: 0.5rem;
 }
@@ -76,37 +84,4 @@
   border-radius: 2px;
   background: #f8d7da;
   font-size: 0.75rem;
-}
-
-/* Loading styles */
-.loading-placeholder {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-}
-
-.loading-text {
-  height: 0.75rem;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-  border-radius: 2px;
-  margin: 2px 0;
-}
-
-.loading-text:first-child {
-  width: 80%;
-}
-
-.loading-text:last-child {
-  width: 60%;
-}
-
-@keyframes loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
 } 

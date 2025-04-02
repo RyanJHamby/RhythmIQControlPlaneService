@@ -288,14 +288,14 @@ public class SpotifyResource {
 
     @GET
     @Path("/playlists")
-    public Response getUserPlaylists(@HeaderParam("Cookie") String cookie) {
+    public Response getPlaylists(@HeaderParam("Cookie") String cookie) {
         try {
             if (cookie == null || !cookie.contains("spotify_access_token")) {
                 return Response.status(Status.UNAUTHORIZED)
                     .entity("{\"error\":\"No access token found\"}")
                     .build();
             }
-
+            
             String accessToken = extractTokenFromCookie(cookie, "spotify_access_token");
             if (accessToken == null) {
                 return Response.status(Status.UNAUTHORIZED)
@@ -305,7 +305,7 @@ public class SpotifyResource {
 
             HttpClient client = HttpClient.newBuilder().build();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://api.spotify.com/v1/me/playlists"))
+                    .uri(URI.create("https://api.spotify.com/v1/me/playlists?limit=50"))
                     .header("Authorization", "Bearer " + accessToken)
                     .GET()
                     .build();
