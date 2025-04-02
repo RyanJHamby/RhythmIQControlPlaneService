@@ -67,7 +67,7 @@ const App: React.FC = () => {
       <Router>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/spotify-callback" element={<SpotifyCallback />} />
+          <Route path="/api/spotify/callback" element={<SpotifyCallback />} />
           <Route
             path="/dashboard"
             element={

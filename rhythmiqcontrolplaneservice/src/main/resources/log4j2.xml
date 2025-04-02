@@ -9,6 +9,8 @@
         <Root level="DEBUG">
             <AppenderRef ref="Console"/>
         </Root>
-        <Logger name="com.rhythmiq.controlplaneservice" level="DEBUG"/>
+        <Logger name="com.rhythmiq.controlplaneservice" level="DEBUG" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
     </Loggers>
 </Configuration>

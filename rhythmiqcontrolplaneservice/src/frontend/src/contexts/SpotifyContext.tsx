@@ -39,7 +39,7 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const login = () => {
     const clientId = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
-    const redirectUri = `${window.location.origin}/spotify-callback`;
+    const redirectUri = `${window.location.origin}/api/spotify/callback`;
     const scope = 'user-read-private user-read-email playlist-read-private playlist-read-collaborative';
     
     const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
