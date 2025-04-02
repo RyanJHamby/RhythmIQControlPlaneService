@@ -55,7 +55,7 @@ export interface SpotifyPlaylistsResponse {
   total: number;
 }
 
-class SpotifyService {
+export class SpotifyService {
   private static instance: SpotifyService;
   private accessToken: string | null = null;
   private tokenExpiry: number | null = null;
@@ -132,7 +132,7 @@ class SpotifyService {
   }
 
   async getLikedSongs(offset: number = 0): Promise<SpotifyLikedSongsResponse> {
-    const response = await fetch(`/api/spotify/liked-songs?offset=${offset}`, {
+    const response = await fetch(`https://your-api-gateway-url/prod/spotify/liked-songs?offset=${offset}`, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -148,7 +148,7 @@ class SpotifyService {
   }
 
   async getPlaylists(): Promise<SpotifyPlaylistsResponse> {
-    const response = await fetch('/api/spotify/playlists', {
+    const response = await fetch('https://your-api-gateway-url/prod/spotify/playlists', {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -164,11 +164,7 @@ class SpotifyService {
   }
 
   logout() {
-    // The backend will handle clearing the cookies
-    fetch('/api/spotify/logout', {
-      method: 'POST',
-      credentials: 'include',
-    });
+    this.accessToken = null;
   }
 }
 

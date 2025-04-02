@@ -3,9 +3,11 @@ plugins {
     id("idea")
     id("io.freefair.lombok") version "8.6"
     id("application")
+    id("com.google.dagger") version "2.50"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
-group = "com.rhythmiq.controlplaneservice"
+group = "com.rhythmiq"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -37,6 +39,7 @@ dependencies {
     implementation("jakarta.inject:jakarta.inject-api:2.0.1")
 
     implementation("com.google.dagger:dagger:2.50")
+    annotationProcessor("com.google.dagger:dagger-compiler:2.50")
 
     // Allows parsing of JSON for invoker client
     implementation("com.github.julman99:gson-fire:1.9.0")
@@ -44,8 +47,8 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.14")
 
     // AWS Lambda Dependencies
-    implementation("com.amazonaws:aws-lambda-java-core:1.2.3")
-    implementation("com.amazonaws:aws-lambda-java-events:3.11.0")
+    implementation("com.amazonaws:aws-lambda-java-core:1.2.2")
+    implementation("com.amazonaws:aws-lambda-java-events:3.11.4")
     implementation("software.amazon.awssdk:dynamodb:2.20.123") // Use latest AWS SDK version
     implementation("software.amazon.awssdk:core:2.20.123") // AWS core utilities
     implementation("software.amazon.awssdk:auth:2.20.123") // AWS authentication
@@ -55,7 +58,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
 
     // Unit Testing
-    testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
+    testImplementation(platform("org.junit:junit-bom:5.9.1"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.mockito:mockito-core:5.5.0")
     testImplementation("org.glassfish.jersey.core:jersey-common:3.1.5")
     testImplementation("org.glassfish.jersey.inject:jersey-hk2:3.1.5")
@@ -143,4 +147,8 @@ tasks.clean {
 application {
     mainClass.set("com.rhythmiq.controlplaneservice.Main")
     applicationDefaultJvmArgs = listOf("-DSPOTIFY_REDIRECT_URI=http://localhost:3000/api/spotify/callback")
+}
+
+tasks.shadowJar {
+    archiveClassifier.set("")
 }
