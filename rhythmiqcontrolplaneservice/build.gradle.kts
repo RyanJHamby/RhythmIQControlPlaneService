@@ -3,8 +3,6 @@ plugins {
     id("idea")
     id("io.freefair.lombok") version "8.6"
     id("application")
-    id("com.google.dagger") version "2.50"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "com.rhythmiq"
@@ -14,6 +12,7 @@ repositories {
     mavenLocal()
     mavenCentral()
     maven { url = uri("https://jitpack.io") } // Jitpack for gson-fire
+    google()
 }
 
 dependencies {
@@ -37,9 +36,6 @@ dependencies {
     // JAX-RS API for RESTful services
     implementation("jakarta.ws.rs:jakarta.ws.rs-api:3.0.0")
     implementation("jakarta.inject:jakarta.inject-api:2.0.1")
-
-    implementation("com.google.dagger:dagger:2.50")
-    annotationProcessor("com.google.dagger:dagger-compiler:2.50")
 
     // Allows parsing of JSON for invoker client
     implementation("com.github.julman99:gson-fire:1.9.0")
@@ -70,52 +66,17 @@ dependencies {
     implementation("jakarta.activation:jakarta.activation-api:2.1.1")
     implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.1")
     implementation("org.glassfish.jaxb:jaxb-runtime:4.0.4")
+
+    implementation("com.google.dagger:dagger:2.50")
+    annotationProcessor("com.google.dagger:dagger-compiler:2.50")
 }
 
-tasks.withType<Test> {
+tasks.test {
     useJUnitPlatform()
 }
 
-tasks.register<Zip>("packageLambda") {
-    dependsOn("jar")
-
-    val lambdaDir = layout.buildDirectory.dir("lambda")
-
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-    from({ zipTree(tasks.getByName<Jar>("jar").archiveFile) }) // Include the JAR
-    from(configurations.runtimeClasspath.get().files.map { if (it.isDirectory) it else zipTree(it) }) // Include dependencies
-
-    destinationDirectory.set(lambdaDir)
-    archiveFileName.set("lambda.zip")
-}
-
-tasks.register("buildInfra") {
-    group = "infrastructure"
-    description = "Install dependencies, compile TypeScript, and synthesize Terraform CDK"
-    dependsOn("packageLambda")
-
-    doLast {
-        exec {
-            commandLine("npm", "install")
-            workingDir = file("$rootDir/infra")
-            isIgnoreExitValue = false  // Fail if npm install fails
-        }
-        exec {
-            commandLine("npx", "tsc")
-            workingDir = file("$rootDir/infra")
-            isIgnoreExitValue = false
-        }
-        exec {
-            commandLine("npx", "cdktf", "synth")
-            workingDir = file("$rootDir/infra")
-            isIgnoreExitValue = false
-        }
-    }
-}
-
-tasks.named("build") {
-    dependsOn("buildInfra")
+tasks.clean {
+    delete("build")
 }
 
 java {
@@ -147,8 +108,4 @@ tasks.clean {
 application {
     mainClass.set("com.rhythmiq.controlplaneservice.Main")
     applicationDefaultJvmArgs = listOf("-DSPOTIFY_REDIRECT_URI=http://localhost:3000/api/spotify/callback")
-}
-
-tasks.shadowJar {
-    archiveClassifier.set("")
 }

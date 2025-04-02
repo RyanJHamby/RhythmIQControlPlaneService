@@ -1,15 +1,15 @@
 package com.rhythmiq.controlplaneservice.lambda;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.rhythmiq.controlplaneservice.spotify.SpotifyService;
-import com.rhythmiq.controlplaneservice.di.SpotifyComponent;
 import com.rhythmiq.controlplaneservice.di.DaggerSpotifyComponent;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.rhythmiq.controlplaneservice.di.SpotifyComponent;
+import com.rhythmiq.controlplaneservice.spotify.SpotifyService;
 
 public class SpotifyApiLambda implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
     private final SpotifyService spotifyService;
@@ -47,10 +47,10 @@ public class SpotifyApiLambda implements RequestHandler<APIGatewayProxyRequestEv
         headers.put("Content-Type", "application/json");
         headers.put("Access-Control-Allow-Origin", "*");
 
-        return APIGatewayProxyResponseEvent.builder()
-            .statusCode(statusCode)
-            .headers(headers)
-            .body(body)
-            .build();
+        APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
+        response.setStatusCode(statusCode);
+        response.setHeaders(headers);
+        response.setBody(body);
+        return response;
     }
 } 

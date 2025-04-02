@@ -20,7 +20,7 @@ export class SpotifyApiStack extends cdk.Stack {
     const spotifyApiLambda = new lambda.Function(this, 'SpotifyApiLambda', {
       runtime: lambda.Runtime.JAVA_21,
       handler: 'com.rhythmiq.controlplaneservice.lambda.SpotifyApiLambda::handleRequest',
-      code: lambda.Code.fromAsset('../build/libs/rhythmiqcontrolplaneservice.jar'),
+      code: lambda.Code.fromAsset('../build/libs/rhythmiq-1.0-SNAPSHOT.jar'),
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
       environment: {

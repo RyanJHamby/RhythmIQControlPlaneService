@@ -5,5 +5,6 @@ pluginManagement {
         gradlePluginPortal()
         mavenLocal()
         mavenCentral()
+        google()
     }
 }
