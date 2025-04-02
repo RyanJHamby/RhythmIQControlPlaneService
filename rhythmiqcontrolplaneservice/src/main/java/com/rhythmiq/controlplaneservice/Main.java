@@ -7,7 +7,7 @@ import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 
 public class Main {
-    public static final String BASE_URI = "http://localhost:8080/";
+    public static final String BASE_URI = "http://localhost:8080/api/";
 
     public static HttpServer startServer() {
         final ResourceConfig rc = new ResourceConfig()
@@ -20,12 +20,12 @@ public class Main {
     public static void main(String[] args) {
         final HttpServer server = startServer();
         System.out.println(String.format("Jersey app started with WADL available at "
-                + "%sapplication.wadl\nHit enter to stop it...", BASE_URI));
-        try {
-            System.in.read();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        server.stop();
+                + "%sapplication.wadl", BASE_URI));
+        
+        // Keep the server running
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down server...");
+            server.stop();
+        }));
     }
 } 

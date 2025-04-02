@@ -50,8 +50,8 @@ dependencies {
     implementation("software.amazon.awssdk:core:2.20.123") // AWS core utilities
     implementation("software.amazon.awssdk:auth:2.20.123") // AWS authentication
     implementation("software.amazon.awssdk:regions:2.20.123") // AWS region utilities
-    implementation("software.amazon.awssdk:ssm:2.24.12")
-    implementation("software.amazon.awssdk:apache-client:2.24.12")
+    implementation("software.amazon.awssdk:ssm:2.20.123")
+    implementation("software.amazon.awssdk:apache-client:2.20.123")
     implementation("com.google.code.gson:gson:2.10.1")
 
     // Unit Testing
@@ -62,6 +62,10 @@ dependencies {
 
     implementation("org.glassfish.jersey.containers:jersey-container-grizzly2-http:3.1.5")
     implementation("org.glassfish.jersey.inject:jersey-hk2:3.1.5")
+
+    implementation("jakarta.activation:jakarta.activation-api:2.1.1")
+    implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.1")
+    implementation("org.glassfish.jaxb:jaxb-runtime:4.0.4")
 }
 
 tasks.withType<Test> {
