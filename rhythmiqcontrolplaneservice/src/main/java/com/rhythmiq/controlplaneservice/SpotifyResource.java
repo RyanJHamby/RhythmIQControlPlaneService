@@ -180,16 +180,20 @@ public class SpotifyResource {
 
     @GET
     @Path("/liked-songs")
-    public Response getLikedSongs(@HeaderParam("Authorization") String authHeader) {
+    public Response getLikedSongs(@HeaderParam("Cookie") String cookie) {
         try {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            if (cookie == null || !cookie.contains("spotify_access_token")) {
                 return Response.status(Status.UNAUTHORIZED)
-                    .entity("{\"error\":\"Missing or invalid authorization header\"}")
+                    .entity("{\"error\":\"No access token found\"}")
                     .build();
             }
-
-            String accessToken = authHeader.substring(7);
-            logger.debug("Fetching liked songs with access token: {}", accessToken.substring(0, 10) + "...");
+            
+            String accessToken = extractTokenFromCookie(cookie, "spotify_access_token");
+            if (accessToken == null) {
+                return Response.status(Status.UNAUTHORIZED)
+                    .entity("{\"error\":\"Invalid access token\"}")
+                    .build();
+            }
 
             HttpClient client = HttpClient.newBuilder().build();
             HttpRequest request = HttpRequest.newBuilder()
@@ -199,20 +203,19 @@ public class SpotifyResource {
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            logger.debug("Received response from Spotify: {}", response.body());
             
             if (response.statusCode() != 200) {
                 logger.error("Spotify API error: {} - {}", response.statusCode(), response.body());
                 return Response.serverError().entity(response.body()).build();
             }
             
-            return Response.ok(response.body()).build();
+            return Response.ok(response.body())
+                .header("Access-Control-Allow-Origin", "http://localhost:3000")
+                .header("Access-Control-Allow-Credentials", "true")
+                .build();
         } catch (Exception e) {
             logger.error("Error fetching liked songs: {}", e.getMessage(), e);
-            JsonObject errorResponse = new JsonObject();
-            errorResponse.addProperty("error", "Failed to fetch liked songs");
-            errorResponse.addProperty("details", e.getMessage());
-            return Response.serverError().entity(errorResponse.toString()).build();
+            return Response.serverError().entity("{\"error\":\"Failed to fetch liked songs\"}").build();
         }
     }
 

@@ -116,10 +116,11 @@ class SpotifyService {
 
   async getLikedSongs(): Promise<SpotifyLikedSongsResponse> {
     const response = await fetch('/api/spotify/liked-songs', {
+      method: 'GET',
+      credentials: 'include',
       headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Important for cookies
+        'Content-Type': 'application/json'
+      }
     });
 
     if (!response.ok) {
