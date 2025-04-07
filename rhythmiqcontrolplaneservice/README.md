@@ -39,15 +39,19 @@ The stack will create:
 - Lambda function for Spotify API calls
 - HTTP API Gateway with CORS support
 - Auto-deploying stage
-- Environment variables for Spotify credentials
 
-### Environment Variables
+### SSM Parameters
 
-Set these environment variables before deploying:
+The following parameters must be stored in AWS SSM Parameter Store:
+- `/rhythmiq/spotify/client_id` - Spotify Client ID
+- `/rhythmiq/spotify/client_secret` - Spotify Client Secret
+- `/rhythmiq/spotify/redirect_uri` - Spotify Redirect URI
+
+To set these parameters:
 ```bash
-export SPOTIFY_CLIENT_ID=your_client_id
-export SPOTIFY_CLIENT_SECRET=your_client_secret
-export SPOTIFY_REDIRECT_URI=your_redirect_uri
+aws ssm put-parameter --name "/rhythmiq/spotify/client_id" --value "your_client_id" --type String
+aws ssm put-parameter --name "/rhythmiq/spotify/client_secret" --value "your_client_secret" --type String
+aws ssm put-parameter --name "/rhythmiq/spotify/redirect_uri" --value "http://localhost:3000/api/spotify/callback" --type String
 ```
 
 ### Local Development

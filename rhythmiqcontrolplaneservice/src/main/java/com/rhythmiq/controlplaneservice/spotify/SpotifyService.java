@@ -9,19 +9,40 @@ import java.util.Base64;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import software.amazon.awssdk.services.ssm.SsmClient;
+import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
+import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
+import software.amazon.awssdk.services.ssm.model.SsmException;
+
 public class SpotifyService {
     private final String clientId;
     private final String clientSecret;
     private final String redirectUri;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
+    private final SsmClient ssmClient;
 
     public SpotifyService() {
-        this.clientId = System.getenv("SPOTIFY_CLIENT_ID");
-        this.clientSecret = System.getenv("SPOTIFY_CLIENT_SECRET");
-        this.redirectUri = System.getenv("SPOTIFY_REDIRECT_URI");
+        this.ssmClient = SsmClient.builder().build();
+        this.clientId = getParameterFromSSM("/rhythmiq/spotify/client_id");
+        this.clientSecret = getParameterFromSSM("/rhythmiq/spotify/client_secret");
+        this.redirectUri = getParameterFromSSM("/rhythmiq/spotify/redirect_uri");
         this.httpClient = HttpClient.newBuilder().build();
         this.objectMapper = new ObjectMapper();
+    }
+
+    private String getParameterFromSSM(String parameterName) {
+        try {
+            GetParameterRequest request = GetParameterRequest.builder()
+                .name(parameterName)
+                .withDecryption(false)
+                .build();
+
+            GetParameterResponse response = ssmClient.getParameter(request);
+            return response.parameter().value();
+        } catch (SsmException e) {
+            throw new RuntimeException("Failed to get parameter from SSM: " + parameterName, e);
+        }
     }
 
     public String getLikedSongs(int offset) throws Exception {
