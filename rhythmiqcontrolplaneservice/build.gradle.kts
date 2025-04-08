@@ -49,7 +49,7 @@ dependencies {
     implementation("software.amazon.awssdk:core:2.20.123") // AWS core utilities
     implementation("software.amazon.awssdk:auth:2.20.123") // AWS authentication
     implementation("software.amazon.awssdk:regions:2.20.123") // AWS region utilities
-    implementation("software.amazon.awssdk:ssm:2.20.123")
+    implementation("software.amazon.awssdk:ssm:2.20.109")
     implementation("software.amazon.awssdk:apache-client:2.20.123")
     implementation("com.google.code.gson:gson:2.10.1")
 
@@ -60,8 +60,13 @@ dependencies {
     testImplementation("org.glassfish.jersey.core:jersey-common:3.1.5")
     testImplementation("org.glassfish.jersey.inject:jersey-hk2:3.1.5")
 
-    implementation("org.glassfish.jersey.containers:jersey-container-grizzly2-http:3.1.5")
-    implementation("org.glassfish.jersey.inject:jersey-hk2:3.1.5")
+    implementation("org.glassfish.jersey.containers:jersey-container-grizzly2-http:3.1.3")
+    implementation("org.glassfish.jersey.inject:jersey-hk2:3.1.3")
+    implementation("org.glassfish.jersey.media:jersey-media-json-jackson:3.1.3")
+    implementation("javax.servlet:javax.servlet-api:4.0.1")
+    implementation("org.glassfish.jersey.core:jersey-server:3.1.3")
+    implementation("org.glassfish.jersey.core:jersey-client:3.1.3")
+    implementation("org.glassfish.jersey.core:jersey-common:3.1.3")
 
     implementation("jakarta.activation:jakarta.activation-api:2.1.1")
     implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.1")
@@ -69,6 +74,8 @@ dependencies {
 
     implementation("com.google.dagger:dagger:2.50")
     annotationProcessor("com.google.dagger:dagger-compiler:2.50")
+
+    implementation("jakarta.servlet:jakarta.servlet-api:6.0.0")
 }
 
 tasks.test {

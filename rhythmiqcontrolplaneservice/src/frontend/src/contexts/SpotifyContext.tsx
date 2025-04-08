@@ -62,7 +62,7 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     const login = () => {
-        window.location.href = '/api/spotify/login';
+        window.location.href = 'http://localhost:8080/api/spotify/login';
     };
 
     const logout = async () => {
