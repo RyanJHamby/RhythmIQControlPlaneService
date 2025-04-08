@@ -62,7 +62,7 @@ public class SpotifyResource {
         try {
             GetParameterRequest request = GetParameterRequest.builder()
                 .name(parameterName)
-                .withDecryption(false)
+                .withDecryption(true)
                 .build();
 
             GetParameterResponse response = ssmClient.getParameter(request);
