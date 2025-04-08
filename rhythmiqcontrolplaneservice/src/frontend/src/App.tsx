@@ -9,11 +9,11 @@ import { Playlists } from './components/Playlists/Playlists';
 import './App.css';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, loading } = useSpotify();
+  const { isAuthenticated, isLoading } = useSpotify();
 
-  console.log('PrivateRoute render:', { isAuthenticated, loading });
+  console.log('PrivateRoute render:', { isAuthenticated, isLoading });
 
-  if (loading) {
+  if (isLoading) {
     console.log('PrivateRoute: Loading...');
     return (
       <div className="flex items-center justify-center min-h-screen">

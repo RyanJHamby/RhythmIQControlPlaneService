@@ -7,50 +7,63 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.rhythmiq.controlplaneservice.di.DaggerSpotifyComponent;
-import com.rhythmiq.controlplaneservice.di.SpotifyComponent;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rhythmiq.controlplaneservice.spotify.SpotifyService;
 
 public class SpotifyApiLambda implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
     private final SpotifyService spotifyService;
+    private final ObjectMapper objectMapper;
 
     public SpotifyApiLambda() {
-        SpotifyComponent component = DaggerSpotifyComponent.create();
-        this.spotifyService = component.spotifyService();
+        this.spotifyService = new SpotifyService();
+        this.objectMapper = new ObjectMapper();
     }
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
-        try {
-            String path = input.getPath();
-            String responseBody;
-
-            if (path.startsWith("/spotify/liked-songs")) {
-                String offset = input.getQueryStringParameters() != null ? 
-                    input.getQueryStringParameters().getOrDefault("offset", "0") : "0";
-                responseBody = spotifyService.getLikedSongs(Integer.parseInt(offset));
-            } else if (path.startsWith("/spotify/playlists")) {
-                responseBody = spotifyService.getPlaylists();
-            } else {
-                return createResponse(404, "{\"error\": \"Not found\"}");
-            }
-
-            return createResponse(200, responseBody);
-        } catch (Exception e) {
-            context.getLogger().log("Error: " + e.getMessage());
-            return createResponse(500, "{\"error\": \"Internal server error\"}");
-        }
-    }
-
-    private APIGatewayProxyResponseEvent createResponse(int statusCode, String body) {
+        APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "application/json");
         headers.put("Access-Control-Allow-Origin", "*");
-
-        APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
-        response.setStatusCode(statusCode);
+        headers.put("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+        headers.put("Access-Control-Allow-Headers", "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token");
         response.setHeaders(headers);
-        response.setBody(body);
+
+        try {
+            String path = input.getPath();
+            String httpMethod = input.getHttpMethod();
+            Map<String, String> queryStringParameters = input.getQueryStringParameters();
+            String sessionId = queryStringParameters != null ? queryStringParameters.get("sessionId") : null;
+            String offset = queryStringParameters != null ? queryStringParameters.get("offset") : null;
+
+            if (sessionId == null) {
+                response.setStatusCode(400);
+                response.setBody("{\"error\":\"Missing session ID\"}");
+                return response;
+            }
+
+            String responseBody;
+            if (path.equals("/spotify/liked-songs") && "GET".equals(httpMethod)) {
+                responseBody = spotifyService.getLikedSongs(sessionId, offset != null ? Integer.parseInt(offset) : 0);
+                response.setStatusCode(200);
+                response.setBody(responseBody);
+            } else if (path.equals("/spotify/playlists") && "GET".equals(httpMethod)) {
+                responseBody = spotifyService.getPlaylists(sessionId);
+                response.setStatusCode(200);
+                response.setBody(responseBody);
+            } else if (path.equals("/spotify/me") && "GET".equals(httpMethod)) {
+                responseBody = spotifyService.getCurrentUser(sessionId);
+                response.setStatusCode(200);
+                response.setBody(responseBody);
+            } else {
+                response.setStatusCode(404);
+                response.setBody("{\"error\":\"Not found\"}");
+            }
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setBody("{\"error\":\"" + e.getMessage() + "\"}");
+        }
+
         return response;
     }
 } 

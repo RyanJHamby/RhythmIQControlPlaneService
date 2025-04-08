@@ -1,32 +1,34 @@
 package com.rhythmiq.controlplaneservice.spotify;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
 import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
 import software.amazon.awssdk.services.ssm.model.SsmException;
 
 public class SpotifyService {
-    private final String clientId;
-    private final String clientSecret;
-    private final String redirectUri;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final SsmClient ssmClient;
+    private String clientCredentialsToken;
+    private static final Map<String, Map<String, String>> userSessions = new HashMap<>();
 
     public SpotifyService() {
-        this.ssmClient = SsmClient.builder().build();
-        this.clientId = getParameterFromSSM("/rhythmiq/spotify/client_id");
-        this.clientSecret = getParameterFromSSM("/rhythmiq/spotify/client_secret");
-        this.redirectUri = getParameterFromSSM("/rhythmiq/spotify/redirect_uri");
+        this.ssmClient = SsmClient.builder()
+            .region(Region.US_EAST_1)
+            .build();
         this.httpClient = HttpClient.newBuilder().build();
         this.objectMapper = new ObjectMapper();
     }
@@ -45,8 +47,12 @@ public class SpotifyService {
         }
     }
 
-    public String getLikedSongs(int offset) throws Exception {
-        String accessToken = getAccessToken();
+    public String getLikedSongs(String sessionId, int offset) throws IOException, InterruptedException {
+        String accessToken = getUserToken(sessionId, "access_token");
+        if (accessToken == null) {
+            throw new RuntimeException("No access token found. User needs to authenticate first.");
+        }
+
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create("https://api.spotify.com/v1/me/tracks?limit=20&offset=" + offset))
             .header("Authorization", "Bearer " + accessToken)
@@ -57,8 +63,12 @@ public class SpotifyService {
         return response.body();
     }
 
-    public String getPlaylists() throws Exception {
-        String accessToken = getAccessToken();
+    public String getPlaylists(String sessionId) throws IOException, InterruptedException {
+        String accessToken = getUserToken(sessionId, "access_token");
+        if (accessToken == null) {
+            throw new RuntimeException("No access token found. User needs to authenticate first.");
+        }
+
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create("https://api.spotify.com/v1/me/playlists?limit=50"))
             .header("Authorization", "Bearer " + accessToken)
@@ -69,19 +79,114 @@ public class SpotifyService {
         return response.body();
     }
 
-    private String getAccessToken() throws Exception {
-        String auth = clientId + ":" + clientSecret;
-        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
-        
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create("https://accounts.spotify.com/api/token"))
-            .header("Authorization", "Basic " + encodedAuth)
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .POST(HttpRequest.BodyPublishers.ofString("grant_type=client_credentials"))
-            .build();
+    private String getClientCredentialsToken() throws IOException, InterruptedException {
+        try {
+            if (clientCredentialsToken != null) {
+                return clientCredentialsToken;
+            }
 
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        JsonNode jsonResponse = objectMapper.readTree(response.body());
-        return jsonResponse.get("access_token").asText();
+            String clientId = getParameterFromSSM("/rhythmiq/spotify/client_id");
+            String clientSecret = getParameterFromSSM("/rhythmiq/spotify/client_secret");
+
+            String credentials = Base64.getEncoder().encodeToString(
+                (clientId + ":" + clientSecret).getBytes());
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://accounts.spotify.com/api/token"))
+                .header("Authorization", "Basic " + credentials)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString("grant_type=client_credentials"))
+                .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() != 200) {
+                throw new RuntimeException("Failed to get client credentials token: " + response.body());
+            }
+
+            JsonNode jsonResponse = objectMapper.readTree(response.body());
+            clientCredentialsToken = jsonResponse.get("access_token").asText();
+            return clientCredentialsToken;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get client credentials token: " + e.getMessage(), e);
+        }
+    }
+
+    public String getAccessToken(String sessionId, String code) throws IOException, InterruptedException {
+        try {
+            String clientId = getParameterFromSSM("/rhythmiq/spotify/client_id");
+            String clientSecret = getParameterFromSSM("/rhythmiq/spotify/client_secret");
+            String redirectUri = getParameterFromSSM("/rhythmiq/spotify/redirect_uri");
+
+            String credentials = Base64.getEncoder().encodeToString(
+                (clientId + ":" + clientSecret).getBytes());
+            
+            Map<String, String> formData = new HashMap<>();
+            formData.put("grant_type", "authorization_code");
+            formData.put("code", code);
+            formData.put("redirect_uri", redirectUri);
+
+            String formBody = formData.entrySet().stream()
+                .map(e -> e.getKey() + "=" + e.getValue())
+                .reduce((a, b) -> a + "&" + b)
+                .orElse("");
+            
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://accounts.spotify.com/api/token"))
+                .header("Authorization", "Basic " + credentials)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(formBody))
+                .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() != 200) {
+                throw new RuntimeException("Failed to get access token: " + response.body());
+            }
+
+            JsonNode jsonResponse = objectMapper.readTree(response.body());
+            String accessToken = jsonResponse.get("access_token").asText();
+            String refreshToken = jsonResponse.get("refresh_token").asText();
+            
+            // Store tokens in session
+            Map<String, String> sessionTokens = new HashMap<>();
+            sessionTokens.put("access_token", accessToken);
+            sessionTokens.put("refresh_token", refreshToken);
+            userSessions.put(sessionId, sessionTokens);
+            
+            return accessToken;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get access token: " + e.getMessage(), e);
+        }
+    }
+
+    public String getCurrentUser(String sessionId) throws IOException, InterruptedException {
+        try {
+            String accessToken = getUserToken(sessionId, "access_token");
+            if (accessToken == null) {
+                throw new RuntimeException("No access token found. User needs to authenticate first.");
+            }
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.spotify.com/v1/me"))
+                .header("Authorization", "Bearer " + accessToken)
+                .GET()
+                .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() != 200) {
+                throw new RuntimeException("Failed to get user profile: " + response.body());
+            }
+            
+            return response.body();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get user profile: " + e.getMessage(), e);
+        }
+    }
+
+    private String getUserToken(String sessionId, String tokenType) {
+        Map<String, String> sessionTokens = userSessions.get(sessionId);
+        return sessionTokens != null ? sessionTokens.get(tokenType) : null;
     }
 } 

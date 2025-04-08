@@ -1,17 +1,4 @@
-interface SpotifyTokenResponse {
-  success: boolean;
-}
-
-interface SpotifyUserProfile {
-  id: string;
-  display_name: string;
-  email: string;
-  images: Array<{
-    url: string;
-    height: number;
-    width: number;
-  }>;
-}
+import { SpotifyLikedSongsResponse, SpotifyPlaylistsResponse, SpotifyUserProfile } from '../types/spotify';
 
 export interface SpotifyTrack {
   track: {
@@ -29,15 +16,6 @@ export interface SpotifyTrack {
   };
 }
 
-export interface SpotifyLikedSongsResponse {
-  items: SpotifyTrack[];
-  total: number;
-  limit: number;
-  offset: number;
-  next: string | null;
-  previous: string | null;
-}
-
 export interface SpotifyPlaylist {
   id: string;
   name: string;
@@ -50,15 +28,10 @@ export interface SpotifyPlaylist {
   };
 }
 
-export interface SpotifyPlaylistsResponse {
-  items: SpotifyPlaylist[];
-  total: number;
-}
-
-export class SpotifyService {
+class SpotifyService {
   private static instance: SpotifyService;
   private accessToken: string | null = null;
-  private tokenExpiry: number | null = null;
+  private sessionId: string | null = null;
 
   private constructor() {}
 
@@ -69,29 +42,26 @@ export class SpotifyService {
     return SpotifyService.instance;
   }
 
-  async exchangeCodeForToken(code: string): Promise<SpotifyTokenResponse> {
-    const response = await fetch('/api/spotify/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ code }),
-      credentials: 'include', // Important for cookies
-    });
+  setAccessToken(token: string) {
+    this.accessToken = token;
+  }
 
-    if (!response.ok) {
-      throw new Error('Failed to exchange code for token');
-    }
-
-    return { success: true } as SpotifyTokenResponse;
+  setSessionId(id: string) {
+    this.sessionId = id;
   }
 
   async getUserProfile(): Promise<SpotifyUserProfile> {
-    const response = await fetch('/api/spotify/me', {
+    if (!this.sessionId) {
+      throw new Error('No session ID found');
+    }
+
+    const response = await fetch(`/api/spotify/me?sessionId=${this.sessionId}`, {
+      method: 'GET',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Important for cookies
+        'Authorization': `Bearer ${this.accessToken}`
+      }
     });
 
     if (!response.ok) {
@@ -132,11 +102,16 @@ export class SpotifyService {
   }
 
   async getLikedSongs(offset: number = 0): Promise<SpotifyLikedSongsResponse> {
-    const response = await fetch(`https://your-api-gateway-url/prod/spotify/liked-songs?offset=${offset}`, {
+    if (!this.sessionId) {
+      throw new Error('No session ID found');
+    }
+
+    const response = await fetch(`/api/spotify/liked-songs?sessionId=${this.sessionId}&offset=${offset}`, {
       method: 'GET',
       credentials: 'include',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.accessToken}`
       }
     });
 
@@ -148,11 +123,16 @@ export class SpotifyService {
   }
 
   async getPlaylists(): Promise<SpotifyPlaylistsResponse> {
-    const response = await fetch('https://your-api-gateway-url/prod/spotify/playlists', {
+    if (!this.sessionId) {
+      throw new Error('No session ID found');
+    }
+
+    const response = await fetch(`/api/spotify/playlists?sessionId=${this.sessionId}`, {
       method: 'GET',
       credentials: 'include',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.accessToken}`
       }
     });
 
@@ -163,8 +143,18 @@ export class SpotifyService {
     return response.json();
   }
 
-  logout() {
+  async logout(): Promise<void> {
+    const response = await fetch('/api/spotify/logout', {
+      method: 'POST',
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to logout');
+    }
+
     this.accessToken = null;
+    this.sessionId = null;
   }
 }
 
