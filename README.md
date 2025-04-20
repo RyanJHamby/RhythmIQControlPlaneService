@@ -1,5 +1,9 @@
 # RhythmIQ - Environment-Driven Music Recommendation System
 
+## High-Level Architecture Diagram
+
+![High-Level Architecture Diagram](/images/high-level-architecture.png)
+
 ## Introduction
 
 RhythmIQ is an innovative music recommendation system that leverages environmental data to curate personalized listening experiences. This document serves as a Low-Level Design (LLD) overview, elaborating on the technologies used, architectural considerations, and trade-offs made during development. 

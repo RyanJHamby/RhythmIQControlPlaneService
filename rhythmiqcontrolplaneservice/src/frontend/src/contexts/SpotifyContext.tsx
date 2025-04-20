@@ -61,8 +61,13 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
     };
 
-    const login = () => {
-        window.location.href = 'http://localhost:8080/api/spotify/login';
+    const login = async () => {
+        try {
+            // Instead of making a fetch request, directly redirect to the login endpoint
+            window.location.href = 'http://localhost:8080/api/spotify/login';
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to login');
+        }
     };
 
     const logout = async () => {

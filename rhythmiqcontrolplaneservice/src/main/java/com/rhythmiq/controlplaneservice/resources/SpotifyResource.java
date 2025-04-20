@@ -1,5 +1,6 @@
 package com.rhythmiq.controlplaneservice.resources;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
@@ -25,7 +26,7 @@ public class SpotifyResource {
 
     @GET
     @Path("/login")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_HTML)
     public Response login(@Context UriInfo uriInfo) {
         try {
             // Get the exact client ID from SSM
@@ -63,21 +64,21 @@ public class SpotifyResource {
             logger.info("\nGenerated auth URL:");
             logger.info("{}", authUrl);
 
-            return Response.ok()
-                .entity(new LoginResponse(authUrl))
+            // Redirect directly to Spotify
+            return Response.seeOther(URI.create(authUrl))
                 .header("Access-Control-Allow-Origin", "http://localhost:3000")
                 .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-                .header("Access-Control-Allow-Headers", "Content-Type")
+                .header("Access-Control-Allow-Headers", "Content-Type, Authorization")
                 .header("Access-Control-Allow-Credentials", "true")
                 .build();
         } catch (Exception e) {
             logger.error("\nError generating login URL:");
             logger.error("Error details:", e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(new ErrorResponse("Failed to generate login URL"))
+                .entity("Error: " + e.getMessage())
                 .header("Access-Control-Allow-Origin", "http://localhost:3000")
                 .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-                .header("Access-Control-Allow-Headers", "Content-Type")
+                .header("Access-Control-Allow-Headers", "Content-Type, Authorization")
                 .header("Access-Control-Allow-Credentials", "true")
                 .build();
         }
@@ -89,7 +90,7 @@ public class SpotifyResource {
         return Response.ok()
             .header("Access-Control-Allow-Origin", "http://localhost:3000")
             .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-            .header("Access-Control-Allow-Headers", "Content-Type")
+            .header("Access-Control-Allow-Headers", "Content-Type, Authorization")
             .header("Access-Control-Allow-Credentials", "true")
             .build();
     }
