@@ -2,7 +2,7 @@
 
 ## High-Level Architecture Diagram
 
-![High-Level Architecture Diagram](/images/high-level-architecture.png)
+![High-Level Architecture Diagram](/rhythmiqcontrolplaneservice/RhythmIQ.drawio.png)
 
 ## Introduction
 
