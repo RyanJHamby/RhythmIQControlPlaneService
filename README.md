@@ -6,7 +6,7 @@
 
 ## Design Docs
 
-![Low-Level Design](/RhythmIQ Low Level Design.pdf)
+![Low-Level Design](RhythmIQ Low Level Design.pdf)
 
 ![High-Level Design](Environment-Driven%20Music%20Recommendation%20Application%20High-Level%20Design.pdf)
 
