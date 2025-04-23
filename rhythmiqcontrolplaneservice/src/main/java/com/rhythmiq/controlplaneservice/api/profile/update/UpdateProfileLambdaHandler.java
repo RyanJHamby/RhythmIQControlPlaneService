@@ -23,7 +23,15 @@ public class UpdateProfileLambdaHandler extends BaseLambdaHandler {
 
     @Inject
     public UpdateProfileLambdaHandler(DynamoDbClient dynamoDbClient) {
-        this.profileDao = new ProfileDao(dynamoDbClient);
+        this.profileDao = createProfileDao(dynamoDbClient);
+    }
+
+    protected ProfileDao getProfileDao() {
+        return profileDao;
+    }
+
+    protected ProfileDao createProfileDao(DynamoDbClient dynamoDbClient) {
+        return new ProfileDao(dynamoDbClient);
     }
 
     @Override
