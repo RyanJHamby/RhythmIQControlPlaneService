@@ -36,7 +36,14 @@ public class UpdateProfileLambdaHandler extends BaseLambdaHandler {
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
+        if (request.getPathParameters() == null) {
+            return createErrorResponse(400, "Missing path parameters");
+        }
+        
         String profileId = request.getPathParameters().get("profileId");
+        if (profileId == null || profileId.trim().isEmpty()) {
+            return createErrorResponse(400, "Profile ID is required");
+        }
 
         UpdateProfileRequest updateRequest;
         try {
