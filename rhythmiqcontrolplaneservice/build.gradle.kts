@@ -46,6 +46,7 @@ dependencies {
     implementation("com.amazonaws:aws-lambda-java-core:1.2.2")
     implementation("com.amazonaws:aws-lambda-java-events:3.11.4")
     implementation("software.amazon.awssdk:dynamodb:2.20.123") // Use latest AWS SDK version
+    implementation("software.amazon.awssdk:dynamodb-enhanced:2.20.123") // DynamoDB Enhanced Client
     implementation("software.amazon.awssdk:core:2.20.123") // AWS core utilities
     implementation("software.amazon.awssdk:auth:2.20.123") // AWS authentication
     implementation("software.amazon.awssdk:regions:2.20.123") // AWS region utilities

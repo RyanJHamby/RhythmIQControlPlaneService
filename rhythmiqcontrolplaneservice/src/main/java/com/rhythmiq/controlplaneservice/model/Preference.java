@@ -1,9 +1,9 @@
 package com.rhythmiq.controlplaneservice.model;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,34 +15,62 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@DynamoDBTable(tableName = "Preferences")
+@DynamoDbBean
 public class Preference {
-    @DynamoDBHashKey(attributeName = "profileId")
     private String profileId;
-
-    @DynamoDBRangeKey(attributeName = "preferenceId")
     private String preferenceId;
-
-    @DynamoDBAttribute(attributeName = "type")
     private PreferenceType type;
-
-    @DynamoDBAttribute(attributeName = "value")
     private String value;
-
-    @DynamoDBAttribute(attributeName = "index")
     private Integer index;
-
-    @DynamoDBAttribute(attributeName = "weight")
     private Double weight;
-
-    @DynamoDBAttribute(attributeName = "isUserSet")
     private Boolean isUserSet;
-
-    @DynamoDBAttribute(attributeName = "createdAt")
     private Instant createdAt;
-
-    @DynamoDBAttribute(attributeName = "updatedAt")
     private Instant updatedAt;
+
+    @DynamoDbPartitionKey
+    public String getProfileId() {
+        return profileId;
+    }
+
+    @DynamoDbSortKey
+    public String getPreferenceId() {
+        return preferenceId;
+    }
+
+    @DynamoDbAttribute("type")
+    public PreferenceType getType() {
+        return type;
+    }
+
+    @DynamoDbAttribute("value")
+    public String getValue() {
+        return value;
+    }
+
+    @DynamoDbAttribute("index")
+    public Integer getIndex() {
+        return index;
+    }
+
+    @DynamoDbAttribute("weight")
+    public Double getWeight() {
+        return weight;
+    }
+
+    @DynamoDbAttribute("isUserSet")
+    public Boolean getIsUserSet() {
+        return isUserSet;
+    }
+
+    @DynamoDbAttribute("createdAt")
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    @DynamoDbAttribute("updatedAt")
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
 
     public enum PreferenceType {
         GENRE,
