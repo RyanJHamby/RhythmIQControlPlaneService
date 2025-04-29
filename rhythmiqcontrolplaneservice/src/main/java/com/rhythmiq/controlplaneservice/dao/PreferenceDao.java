@@ -14,11 +14,14 @@ import java.util.Optional;
 
 @Singleton
 public class PreferenceDao {
+
+    private static final String TABLE_NAME = "Preferences";
     private final DynamoDbTable<Preference> table;
+
 
     @Inject
     public PreferenceDao(DynamoDbEnhancedClient dynamoDbClient) {
-        this.table = dynamoDbClient.table("Preferences", TableSchema.fromBean(Preference.class));
+        this.table = dynamoDbClient.table(TABLE_NAME, TableSchema.fromBean(Preference.class));
     }
 
     public void createPreference(Preference preference) {
