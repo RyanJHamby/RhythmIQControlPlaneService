@@ -77,6 +77,9 @@ dependencies {
     annotationProcessor("com.google.dagger:dagger-compiler:2.50")
 
     implementation("jakarta.servlet:jakarta.servlet-api:6.0.0")
+
+    testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
 }
 
 tasks.test {

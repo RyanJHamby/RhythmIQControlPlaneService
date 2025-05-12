@@ -8,6 +8,9 @@ import java.net.http.HttpResponse;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,6 +27,7 @@ public class SpotifyService {
     private final SsmClient ssmClient;
     private String clientCredentialsToken;
     private static final Map<String, Map<String, String>> userSessions = new HashMap<>();
+    private static final String SPOTIFY_API_BASE = "https://api.spotify.com/v1";
 
     public SpotifyService() {
         this.ssmClient = SsmClient.builder()
@@ -188,5 +192,46 @@ public class SpotifyService {
     private String getUserToken(String sessionId, String tokenType) {
         Map<String, String> sessionTokens = userSessions.get(sessionId);
         return sessionTokens != null ? sessionTokens.get(tokenType) : null;
+    }
+
+    public String getRecommendations(String profileId, Map<String, Object> parameters) {
+        try {
+            // Get user's access token from session
+            String accessToken = getAccessToken(profileId, "access_token");
+            if (accessToken == null) {
+                throw new IllegalStateException("No access token found for profile: " + profileId);
+            }
+
+            // Build recommendation request
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(SPOTIFY_API_BASE + "/recommendations"))
+                .header("Authorization", "Bearer " + accessToken)
+                .GET()
+                .build();
+
+            // Add parameters to request
+            String queryString = parameters.entrySet().stream()
+                .map(entry -> entry.getKey() + "=" + URLEncoder.encode(entry.getValue().toString(), StandardCharsets.UTF_8))
+                .collect(Collectors.joining("&"));
+            
+            if (!queryString.isEmpty()) {
+                request = HttpRequest.newBuilder(request.uri())
+                    .uri(URI.create(request.uri() + "?" + queryString))
+                    .header("Authorization", "Bearer " + accessToken)
+                    .GET()
+                    .build();
+            }
+
+            // Send request
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                return response.body();
+            } else {
+                throw new RuntimeException("Failed to get recommendations: " + response.body());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting recommendations", e);
+        }
     }
 } 

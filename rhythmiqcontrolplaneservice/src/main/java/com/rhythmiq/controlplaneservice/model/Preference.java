@@ -32,9 +32,17 @@ public class Preference {
         return profileId;
     }
 
+    public void setProfileId(String profileId) {
+        this.profileId = profileId;
+    }
+
     @DynamoDbSortKey
     public String getPreferenceId() {
         return preferenceId;
+    }
+
+    public void setPreferenceId(String preferenceId) {
+        this.preferenceId = preferenceId;
     }
 
     @DynamoDbAttribute("type")
@@ -42,9 +50,17 @@ public class Preference {
         return type;
     }
 
+    public void setType(PreferenceType type) {
+        this.type = type;
+    }
+
     @DynamoDbAttribute("value")
     public String getValue() {
         return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
     }
 
     @DynamoDbAttribute("index")
@@ -52,9 +68,17 @@ public class Preference {
         return index;
     }
 
+    public void setIndex(Integer index) {
+        this.index = index;
+    }
+
     @DynamoDbAttribute("weight")
     public Double getWeight() {
         return weight;
+    }
+
+    public void setWeight(Double weight) {
+        this.weight = weight;
     }
 
     @DynamoDbAttribute("isUserSet")
@@ -62,9 +86,17 @@ public class Preference {
         return isUserSet;
     }
 
+    public void setIsUserSet(Boolean isUserSet) {
+        this.isUserSet = isUserSet;
+    }
+
     @DynamoDbAttribute("createdAt")
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 
     @DynamoDbAttribute("updatedAt")
@@ -72,10 +104,16 @@ public class Preference {
         return updatedAt;
     }
 
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public enum PreferenceType {
         GENRE,
+        ARTIST,
         TEMPO,
+        MOOD,
         INSTRUMENT,
-        ARTIST
+        ERA
     }
 }
