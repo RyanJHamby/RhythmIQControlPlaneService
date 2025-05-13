@@ -8,17 +8,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.core.pagination.sync.SdkIterable;
+
 
 import java.time.Instant;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,11 +33,14 @@ public class PreferenceDaoTest {
     @Mock
     private DynamoDbTable<Preference> preferenceTable;
 
+    private TableSchema<Preference> preferenceSchema;
+
     private PreferenceDao preferenceDao;
 
     @BeforeEach
     void setUp() {
-        when(dynamoDbClient.table(anyString(), any())).thenReturn(preferenceTable);
+        preferenceSchema = TableSchema.fromBean(Preference.class);
+        when(dynamoDbClient.table(anyString(), eq(preferenceSchema))).thenReturn(preferenceTable);
         preferenceDao = new PreferenceDao(dynamoDbClient);
     }
 
@@ -47,7 +53,7 @@ public class PreferenceDaoTest {
         preferenceDao.createPreference(preference);
         
         // Assert
-        verify(preferenceTable).putItem(any());
+        verify(preferenceTable).putItem(any(Preference.class));
         assertNotNull(preference.getCreatedAt());
         assertNotNull(preference.getUpdatedAt());
     }
@@ -58,7 +64,8 @@ public class PreferenceDaoTest {
         String profileId = "profile1";
         String preferenceId = "pref1";
         Preference expectedPreference = createTestPreference(profileId, preferenceId, 0);
-        when(preferenceTable.getItem(any())).thenReturn(expectedPreference);
+        Key key = Key.builder().partitionValue(profileId).sortValue(preferenceId).build();
+        when(preferenceTable.getItem(eq(key))).thenReturn(expectedPreference);
 
         // Act
         Optional<Preference> result = preferenceDao.getPreference(profileId, preferenceId);
@@ -66,7 +73,7 @@ public class PreferenceDaoTest {
         // Assert
         assertTrue(result.isPresent());
         assertEquals(expectedPreference, result.get());
-        verify(preferenceTable).getItem(any());
+        verify(preferenceTable).getItem(eq(key));
     }
 
     @Test
@@ -77,11 +84,14 @@ public class PreferenceDaoTest {
             createTestPreference(profileId, "pref1", 0),
             createTestPreference(profileId, "pref2", 1)
         );
+        @SuppressWarnings("unchecked")
         PageIterable<Preference> pageIterable = mock(PageIterable.class);
-        Page<Preference> page = mock(Page.class);
-        when(page.items()).thenReturn(expectedPreferences);
-        when(pageIterable.iterator()).thenReturn(Collections.singletonList(page).iterator());
-        when(preferenceTable.query(any(QueryConditional.class))).thenReturn(pageIterable);
+        @SuppressWarnings("unchecked")
+        SdkIterable<Preference> sdkIterable = mock(SdkIterable.class);
+        when(pageIterable.items()).thenReturn(sdkIterable);
+        when(sdkIterable.stream()).thenReturn(expectedPreferences.stream());
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder().partitionValue(profileId).build());
+        when(preferenceTable.query(eq(queryConditional))).thenReturn(pageIterable);
 
         // Act
         List<Preference> result = preferenceDao.listPreferences(profileId);
@@ -101,7 +111,7 @@ public class PreferenceDaoTest {
         preferenceDao.updatePreference(preference);
 
         // Assert
-        verify(preferenceTable).putItem(any());
+        verify(preferenceTable).putItem(any(Preference.class));
         assertTrue(preference.getUpdatedAt().isAfter(originalUpdatedAt));
     }
 
@@ -115,24 +125,26 @@ public class PreferenceDaoTest {
         preferenceDao.deletePreference(profileId, preferenceId);
 
         // Assert
-        verify(preferenceTable).deleteItem(any());
+        verify(preferenceTable).deleteItem(any(Preference.class));
     }
 
     @Test
     void testSavePreference_ValidIndex() {
         // Arrange
         Preference preference = createTestPreference("profile1", "pref1", 0);
+        @SuppressWarnings("unchecked")
         PageIterable<Preference> pageIterable = mock(PageIterable.class);
-        Page<Preference> page = mock(Page.class);
-        when(page.items()).thenReturn(Collections.emptyList());
-        when(pageIterable.iterator()).thenReturn(Collections.singletonList(page).iterator());
-        when(preferenceTable.scan(any(ScanEnhancedRequest.class))).thenReturn(pageIterable);
+        @SuppressWarnings("unchecked")
+        SdkIterable<Preference> sdkIterable = mock(SdkIterable.class);
+        when(pageIterable.items()).thenReturn(sdkIterable);
+        when(sdkIterable.stream()).thenReturn(Collections.<Preference>emptyList().stream());
+        when(preferenceTable.scan((ScanEnhancedRequest) any())).thenReturn(pageIterable);
 
         // Act
         preferenceDao.savePreference(preference);
 
         // Assert
-        verify(preferenceTable).putItem(any());
+        verify(preferenceTable).putItem(any(Preference.class));
     }
 
     @Test
@@ -154,11 +166,13 @@ public class PreferenceDaoTest {
         for (int i = 0; i < 100; i++) {
             existingPreferences.add(createTestPreference("profile1", "pref" + i, i));
         }
+        @SuppressWarnings("unchecked")
         PageIterable<Preference> pageIterable = mock(PageIterable.class);
-        Page<Preference> page = mock(Page.class);
-        when(page.items()).thenReturn(existingPreferences);
-        when(pageIterable.iterator()).thenReturn(Collections.singletonList(page).iterator());
-        when(preferenceTable.scan(any(ScanEnhancedRequest.class))).thenReturn(pageIterable);
+        @SuppressWarnings("unchecked")
+        SdkIterable<Preference> sdkIterable = mock(SdkIterable.class);
+        when(pageIterable.items()).thenReturn(sdkIterable);
+        when(sdkIterable.stream()).thenReturn(existingPreferences.stream());
+        when(preferenceTable.scan((ScanEnhancedRequest) any())).thenReturn(pageIterable);
 
         // Act & Assert
         assertThrows(IllegalStateException.class, () -> {
@@ -175,11 +189,14 @@ public class PreferenceDaoTest {
             createTestPreference(profileId, "pref2", 1),
             createTestPreference(profileId, "pref3", 2)
         );
+        @SuppressWarnings("unchecked")
         PageIterable<Preference> pageIterable = mock(PageIterable.class);
-        Page<Preference> page = mock(Page.class);
-        when(page.items()).thenReturn(preferences);
-        when(pageIterable.iterator()).thenReturn(Collections.singletonList(page).iterator());
-        when(preferenceTable.query(any(QueryConditional.class))).thenReturn(pageIterable);
+        @SuppressWarnings("unchecked")
+        SdkIterable<Preference> sdkIterable = mock(SdkIterable.class);
+        when(pageIterable.items()).thenReturn(sdkIterable);
+        when(sdkIterable.stream()).thenReturn(preferences.stream());
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder().partitionValue(profileId).build());
+        when(preferenceTable.query(eq(queryConditional))).thenReturn(pageIterable);
 
         List<String> newOrder = Arrays.asList("pref3", "pref1", "pref2");
 
@@ -187,7 +204,7 @@ public class PreferenceDaoTest {
         preferenceDao.reorderPreferences(profileId, newOrder);
 
         // Assert
-        verify(preferenceTable, times(3)).putItem(any());
+        verify(preferenceTable, times(3)).putItem(any(Preference.class));
     }
 
     @Test
@@ -213,11 +230,12 @@ public class PreferenceDaoTest {
             createTestPreference(profileId, "pref1", 0),
             createTestPreference(profileId, "pref2", 1)
         );
+        SdkIterable<Preference> sdkIterable = mock(SdkIterable.class);
+        when(sdkIterable.stream()).thenReturn(preferences.stream());
         PageIterable<Preference> pageIterable = mock(PageIterable.class);
-        Page<Preference> page = mock(Page.class);
-        when(page.items()).thenReturn(preferences);
-        when(pageIterable.iterator()).thenReturn(Collections.singletonList(page).iterator());
-        when(preferenceTable.query(any(QueryConditional.class))).thenReturn(pageIterable);
+        when(pageIterable.items()).thenReturn(sdkIterable);
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder().partitionValue(profileId).build());
+        when(preferenceTable.query(eq(queryConditional))).thenReturn(pageIterable);
 
         List<String> invalidOrder = Arrays.asList("pref1", "invalidPref");
 
