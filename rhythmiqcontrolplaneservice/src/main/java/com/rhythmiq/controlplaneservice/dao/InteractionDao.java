@@ -17,6 +17,9 @@ import java.util.UUID;
 
 @Singleton
 public class InteractionDao {
+    private static final String TYPE_INDEX = "TypeIndex";
+    private static final String USER_SONG_INDEX = "UserSongIndex";
+    private static final String SONG_ID_INDEX = "SongIdIndex";
     private static final String TABLE_NAME = "Interactions";
     private final DynamoDbTable<Interaction> table;
 
@@ -61,15 +64,41 @@ public class InteractionDao {
 
     public List<Interaction> getUserSongInteractions(String userId, String songId) {
         QueryConditional queryConditional = QueryConditional
-                .keyEqualTo(Key.builder().partitionValue(userId).build());
+                .keyEqualTo(Key.builder()
+                        .partitionValue(userId)
+                        .sortValue(songId)
+                        .build());
 
         List<Interaction> interactions = new ArrayList<>();
-        PageIterable<Interaction> pages = table.query(queryConditional);
-        pages.items().forEach(interaction -> {
-            if (interaction.getSongId().equals(songId)) {
-                interactions.add(interaction);
-            }
-        });
+        table.index(USER_SONG_INDEX)
+                .query(queryConditional)
+                .forEach(page -> page.items().forEach(interactions::add));
+        return interactions;
+    }
+
+    public List<Interaction> getInteractionsByType(Interaction.InteractionType type) {
+        QueryConditional queryConditional = QueryConditional
+                .keyEqualTo(Key.builder()
+                        .partitionValue(type.toString())
+                        .build());
+
+        List<Interaction> interactions = new ArrayList<>();
+        table.index(TYPE_INDEX)
+                .query(queryConditional)
+                .forEach(page -> page.items().forEach(interactions::add));
+        return interactions;
+    }
+
+    public List<Interaction> getInteractionsBySong(String songId) {
+        QueryConditional queryConditional = QueryConditional
+                .keyEqualTo(Key.builder()
+                        .partitionValue(songId)
+                        .build());
+
+        List<Interaction> interactions = new ArrayList<>();
+        table.index(SONG_ID_INDEX)
+                .query(queryConditional)
+                .forEach(page -> page.items().forEach(interactions::add));
         return interactions;
     }
 

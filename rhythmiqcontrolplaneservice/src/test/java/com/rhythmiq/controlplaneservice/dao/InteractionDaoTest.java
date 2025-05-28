@@ -6,26 +6,23 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.*;
 
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class InteractionDaoTest {
+public class InteractionDaoTest {
 
     @Mock
     private DynamoDbEnhancedClient dynamoDbClient;
@@ -115,25 +112,108 @@ class InteractionDaoTest {
         // Given
         String userId = UUID.randomUUID().toString();
         String songId = "song123";
-        List<Interaction> allInteractions = Arrays.asList(
+        List<Interaction> expectedInteractions = Arrays.asList(
                 createTestInteraction(userId, UUID.randomUUID().toString(), songId),
-                createTestInteraction(userId, UUID.randomUUID().toString(), "differentSong"),
                 createTestInteraction(userId, UUID.randomUUID().toString(), songId)
         );
 
         @SuppressWarnings("unchecked")
+        DynamoDbIndex<Interaction> index = mock(DynamoDbIndex.class);
+        when(interactionTable.index("UserSongIndex")).thenReturn(index);
+        @SuppressWarnings("unchecked")
         PageIterable<Interaction> pageIterable = mock(PageIterable.class);
-        when(pageIterable.items()).thenReturn(() -> allInteractions.iterator());
-        when(interactionTable.query(any(QueryConditional.class))).thenReturn(pageIterable);
+        when(index.query(any(QueryConditional.class))).thenReturn(pageIterable);
+        doAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            Consumer<Page<Interaction>> consumer = invocation.getArgument(0);
+            @SuppressWarnings("unchecked")
+            Page<Interaction> page = mock(Page.class);
+            when(page.items()).thenReturn(expectedInteractions);
+            consumer.accept(page);
+            return null;
+        }).when(pageIterable).forEach(any());
 
         // When
         List<Interaction> result = interactionDao.getUserSongInteractions(userId, songId);
 
         // Then
         assertNotNull(result);
-        assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(i -> i.getSongId().equals(songId)));
-        verify(interactionTable).query(any(QueryConditional.class));
+        assertEquals(expectedInteractions.size(), result.size());
+        assertEquals(expectedInteractions, result);
+        verify(interactionTable).index("UserSongIndex");
+        verify(index).query(any(QueryConditional.class));
+    }
+
+    @Test
+    void testGetInteractionsByType() {
+        // Given
+        Interaction.InteractionType type = Interaction.InteractionType.LIKE;
+        List<Interaction> expectedInteractions = Arrays.asList(
+                createTestInteraction(UUID.randomUUID().toString(), UUID.randomUUID().toString()),
+                createTestInteraction(UUID.randomUUID().toString(), UUID.randomUUID().toString())
+        );
+
+        @SuppressWarnings("unchecked")
+        DynamoDbIndex<Interaction> index = mock(DynamoDbIndex.class);
+        when(interactionTable.index("TypeIndex")).thenReturn(index);
+        @SuppressWarnings("unchecked")
+        PageIterable<Interaction> pageIterable = mock(PageIterable.class);
+        when(index.query(any(QueryConditional.class))).thenReturn(pageIterable);
+        doAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            Consumer<Page<Interaction>> consumer = invocation.getArgument(0);
+            @SuppressWarnings("unchecked")
+            Page<Interaction> page = mock(Page.class);
+            when(page.items()).thenReturn(expectedInteractions);
+            consumer.accept(page);
+            return null;
+        }).when(pageIterable).forEach(any());
+
+        // When
+        List<Interaction> result = interactionDao.getInteractionsByType(type);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(expectedInteractions.size(), result.size());
+        assertEquals(expectedInteractions, result);
+        verify(interactionTable).index("TypeIndex");
+        verify(index).query(any(QueryConditional.class));
+    }
+
+    @Test
+    void testGetInteractionsBySong() {
+        // Given
+        String songId = "song123";
+        List<Interaction> expectedInteractions = Arrays.asList(
+                createTestInteraction(UUID.randomUUID().toString(), UUID.randomUUID().toString(), songId),
+                createTestInteraction(UUID.randomUUID().toString(), UUID.randomUUID().toString(), songId)
+        );
+
+        @SuppressWarnings("unchecked")
+        DynamoDbIndex<Interaction> index = mock(DynamoDbIndex.class);
+        when(interactionTable.index("SongIdIndex")).thenReturn(index);
+        @SuppressWarnings("unchecked")
+        PageIterable<Interaction> pageIterable = mock(PageIterable.class);
+        when(index.query(any(QueryConditional.class))).thenReturn(pageIterable);
+        doAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            Consumer<Page<Interaction>> consumer = invocation.getArgument(0);
+            @SuppressWarnings("unchecked")
+            Page<Interaction> page = mock(Page.class);
+            when(page.items()).thenReturn(expectedInteractions);
+            consumer.accept(page);
+            return null;
+        }).when(pageIterable).forEach(any());
+
+        // When
+        List<Interaction> result = interactionDao.getInteractionsBySong(songId);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(expectedInteractions.size(), result.size());
+        assertEquals(expectedInteractions, result);
+        verify(interactionTable).index("SongIdIndex");
+        verify(index).query(any(QueryConditional.class));
     }
 
     @Test

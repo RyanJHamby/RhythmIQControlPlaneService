@@ -30,6 +30,22 @@ export class InteractionStack extends TerraformStack {
           projectionType: "ALL",
           writeCapacity: 5,
           readCapacity: 5
+        },
+        {
+          name: "TypeIndex",
+          hashKey: "type",
+          rangeKey: "createdAt",
+          projectionType: "ALL",
+          writeCapacity: 5,
+          readCapacity: 5
+        },
+        {
+          name: "UserSongIndex",
+          hashKey: "userId",
+          rangeKey: "songId",
+          projectionType: "ALL",
+          writeCapacity: 5,
+          readCapacity: 5
         }
       ],
       tags: {
